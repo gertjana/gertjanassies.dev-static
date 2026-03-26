@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Rust on ESP32 part 2 - The hardware - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="Focusing on the minimal hardware needed to build an EV Charger with Rust on a ESP32" />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="Rust on ESP32 part 2 - The hardware" />
+<meta property="og:description" content="Focusing on the minimal hardware needed to build an EV Charger with Rust on a ESP32" />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;240125-rust-on-esp32-2-hardware&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;rusty_charger.webp" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2024-01-25T00:00:00Z" />
+
+
+<meta property="article:tag" content="rust" />
+
+<meta property="article:tag" content="embedded" />
+
+<meta property="article:tag" content="esp32" />
+
+<meta property="article:tag" content="featured" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="Rust on ESP32 part 2 - The hardware" />
+    <meta name="twitter:description" content="Focusing on the minimal hardware needed to build an EV Charger with Rust on a ESP32" />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;rusty_charger.webp
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;240125-rust-on-esp32-2-hardware&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/blog/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">Rust on ESP32 part 2 - The hardware</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2024-01-25</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+        <span class="featured-badge">Featured</span>
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+        <a href="/categories/make/" class="category">make</a>
+      
+      
+        
+          <a href="/tags/rust/" class="tag">rust</a>
+        
+      
+        
+          <a href="/tags/embedded/" class="tag">embedded</a>
+        
+      
+        
+          <a href="/tags/esp32/" class="tag">esp32</a>
+        
+      
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">Focusing on the minimal hardware needed to build an EV Charger with Rust on a ESP32</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;rusty_charger.webp" alt="Rust on ESP32 part 2 - The hardware" />
+      
+
+      <div class="post-markdown-content">
+        <blockquote>
+<p>This is a series of articles about using Rust to program an ESP32 Microcontroller by building a minimal EV Charger.<br/></p>
+<ul>
+<li>Part 1: <a href="/post/240101_rust_on_esp32">A Proof of Concept</a></li>
+<li>Part 2: <a href="/post/240125_rust_on_esp32_2_hardware">A minimal EV Charger hardware setup</a> (this article)</li>
+<li>Part 3: Network and Charger to backoffice communication (Wifi/ MQTT / OCPP)</li>
+<li>Part 4: Optional: Charger to Car communication (Mode2)</li>
+</ul>
+</blockquote>
+<p>The previous <a href="/post/240101_rust_on_esp32">article</a> was about try-ing to get Rust running on a esp32 microcontroller.</p>
+<p>In there I started to set up as a charger for an Electric Vehicle, lets dive more into that by desiging the hardware.</p>
+<p>A simple as possible charger should:</p>
+<ul>
+<li>Have a way to detect whether a cable is inserted or not (or simulated by a switch)</li>
+<li>be able to lock the cable with a solenoid (or simulated by a led)</li>
+<li>Allow swiping a card to start charging (or simulated with a button)</li>
+<li>Have a relay to apply power to the cable</li>
+<li>Visualize the state of the charger (the M5 Stamp has a multicolor led onboard, and I've added a small OLED display I had lying around)</li>
+</ul>
+<p>Putting all this into a schematic it looks something like this:</p>
+<Image path="/content-images/schematic2.png" alt="Schematic" thumbnail_width="600" />
+<h2 id="managing-state">Managing State</h2>
+<p>As a Charger goes through several states during it's operation (Available, Occupied, Charging, Error)
+a FSM (Finite State Machine) looks like a good way to model this.</p>
+<p>A FSM works as follows:</p>
+<p>Whenever something happens (an InputEvent), a cable gets inserted/removed or some form of authentication is provided, a transision is made from one state to the next, resulting in an output event, for instance to tell the charger to lock the cable and start charging.</p>
+<Image path="/content-images/charger_eps32_state_diagram.png" alt="FSM" thumbnail_width="600" />
+<p>Every Arrow is a <code>transition</code> call with the current <code>State</code> and an <code>InputEvent</code> to a new <code>State</code> with an <code>OutputEvent</code>.</p>
+<p>code wise that will look like this:</p>
+<pre><code data-lang="rust">impl Charger {
+    pub fn transition(&amp;mut self, input: ChargerInput) -&gt; Result&lt;(State, ChargerOutput), Error) {
+        let output = match (input, self.state.clone()) {
+            (ChargerInput::PlugIn, State::Available) =&gt; {
+                self.set_state(State::Occupied);
+                ChargerOutput::Unlocked
+            }
+            (ChargerInput::PlugOut, State::Occupied) =&gt; {
+                self.set_state(State::Available);
+                ChargerOutput::Unlocked
+            }
+            (ChargerInput::Swipe, State::Occupied) =&gt; {
+                self.set_state(State::Charging);
+                ChargerOutput::LockedAndPowerIsOn
+            }
+            (ChargerInput::Swipe, State::Charging) =&gt; {
+                self.set_state(State::Occupied);
+                ChargerOutput::Unlocked
+            }
+            _ =&gt; {
+                Err(&quot;An invalid transistion occurred&quot;)
+            }
+        }
+       Ok((self.get_state(), output))
+    }
+</code></pre>
+<p>So now all it left is a bit of logic to do the transitions whenever an event happens</p>
+<pre><code data-lang="rust">    // setup is skipped, see previous blog, or code
+
+    button.enable_interrupt().unwrap();
+    notification.wait(esp_idf_svc::hal::delay::BLOCK);
+
+    match charger.transition(charger::ChargerInput::Swipe) {
+        Ok((ChargerState::Charging, charger::ChargerOutput::LockedAndPowerIsOn)) =&gt; {
+            relay.set_high().unwrap();
+            solenoid.set_high().unwrap();
+        }
+        Ok((_, charger::ChargerOutput::Unlocked)) =&gt; {
+            relay.set_low().unwrap();
+            solenoid.set_low().unwrap();
+        }
+        ...
+    }
+</code></pre>
+<Image path="/content-images/pullupresistor.png" alt="Application Model" thumbnail_width="600" />
+<p>The GPIO Port is configured as input with an pull-up resistor with the button connected to ground, meaning whenever the button is pressed, it will connect the input to ground (0) and when released the pull-up resistor will 'pull' it to teh +5V (1) again (creating a Positive Edge (0 -&gt; 1) event).</p>
+<p>As we have configured the button in the code to subscribe to a positive edge event, the code will unblock whenever the button is released.</p>
+<p>We then call the transition function with the current state and the input event <code>Swipe</code> which will give us a new state <code>Chargng</code> and a output <code>LockedAndPowerIsOn</code>, we then set the hardware to whatever the output is telling us.</p>
+<p>So that's the hardware done, I've added a small oled display with an i2c interface, with the rust library that exists for this display, displaying information is a breeze:</p>
+<pre><code data-lang="rust">let peripherals = Peripherals::take().unwrap();
+let i2c = peripherals.i2c0;
+let sda = peripherals.pins.gpio21;
+let scl = peripherals.pins.gpio20;
+
+let i2c_config = I2cConfig::new().baudrate(100_000.into());
+let i2c = I2cDriver::new(i2c, sda, scl, &amp;i2c_config)?;
+
+let interface = I2CDisplayInterface::new(i2c);
+let display = Ssd1306::new(
+        interface, DisplaySize128x64, DisplayRotation::Rotate180).into_terminal_mode();
+
+display.init();
+display.clear();
+
+write!(display, &quot;Hello World&quot;);
+</code></pre>
+<p>Here's how it looks on a breadboard, I'm using the button and led that are on the m5 Stamp to simulate the swiping of a card and displaying the charger state, a blue led to simulate the relay and a jumper to simulate the inserting of a cable.</p>
+<Image path="/content-images/breadboard.png" alt="Breadboard" thumbnail_width="600" />
+<p>The next article will focus on sending and retrieving OCPP Messages to a backend by configuring the Wifi and MQTT Publisher and Subscriber.</p>
+<h2 id="references">references</h2>
+<ul>
+<li>Code: https://github.com/gertjana/charger_rust_esp32_c3/tree/cad15fb3a088cdd82d7dbfd5f9d16512b37e4d6f</li>
+<li>esp-idf-template: https://github.com/esp-rs/esp-idf-template</li>
+<li>M5 Stamp ESP32-C3U: https://docs.m5stack.com/en/core/stamp_c3u</li>
+<li>The embedded rust book:  https://docs.rust-embedded.org/book/</li>
+<li>Espresiff ESP-32: https://www.espressif.com/en/products/socs/esp32</li>
+</ul>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>

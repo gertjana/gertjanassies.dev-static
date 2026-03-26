@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Smaller docker containers - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="How to create your docker containers as small as possible" />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="Smaller docker containers" />
+<meta property="og:description" content="How to create your docker containers as small as possible" />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;210813-smaller-docker-containers&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;smaller_docker_containers_top.jpg" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2022-08-13T00:00:00Z" />
+
+
+<meta property="article:tag" content="docker" />
+
+<meta property="article:tag" content="go" />
+
+<meta property="article:tag" content="scratch" />
+
+<meta property="article:tag" content="optimization" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="Smaller docker containers" />
+    <meta name="twitter:description" content="How to create your docker containers as small as possible" />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;smaller_docker_containers_top.jpg
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;210813-smaller-docker-containers&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/blog/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">Smaller docker containers</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2022-08-13</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+      
+        
+          <a href="/tags/docker/" class="tag">docker</a>
+        
+      
+        
+          <a href="/tags/go/" class="tag">go</a>
+        
+      
+        
+          <a href="/tags/scratch/" class="tag">scratch</a>
+        
+      
+        
+          <a href="/tags/optimization/" class="tag">optimization</a>
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">How to create your docker containers as small as possible</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;smaller_docker_containers_top.jpg" alt="Smaller docker containers" />
+      
+
+      <div class="post-markdown-content">
+        <p>In the company where I work as a Site Reliability Engineer, we currently have around 60k devices in the field, we are expected to scale that to half a million by 2025. and they all need to communicate with our back-office which consists of a whole bunch of containerized microservices.
+This means for everything that we do, we have to ask ourselves the age-old question:</p>
+<blockquote>
+<p>does it scale?</p>
+</blockquote>
+<p>and when it does, how can we make sure the costs do not scale faster than the resources we need.
+One thing to help with that is to make sure our docker containers are as small as possible.
+This will also help in other areas, less software running means less things can crash and a significantly smaller attack surface, so stability and security will increase too, Hoorah!</p>
+<p>The example I'm going to expand upon works with a small go application but could be applied to almost any language that compiles to a native application.</p>
+<p>If you want to dive into the code first, here's the repo: <a rel="noopener external" target="_blank" href="https://gitlab.com/gertjana/tinyweb">https://gitlab.com/gertjana/tinyweb</a></p>
+<h2 id="something-to-test-with">Something to test with</h2>
+<p>The infamous hello world application here is done with the <a rel="noopener external" target="_blank" href="https://echo.labstack.com/">echo</a> web framework just to have something I can verify working from within the container.</p>
+<pre><code data-lang="go">package main
+import (
+  &quot;net/http&quot;
+  &quot;github.com/labstack/echo/v4&quot;
+  &quot;github.com/labstack/echo/v4/middleware&quot;
+)
+func main() {
+  e := echo.New()
+  e.Use(middleware.Logger())
+  e.GET(&quot;/&quot;, hello)
+  e.Logger.Fatal(e.Start(&quot;:8000&quot;))
+}
+
+func hello(c echo.Context) error {
+  return c.String(http.StatusOK, &quot;Hello, World!&quot;)
+}
+</code></pre>
+<h2 id="build-a-normal-docker-container-for-your-app">Build a normal docker container for your app</h2>
+<pre><code data-lang="docker">FROM golang:1.16
+RUN mkdir -p /app
+COPY main.go /app
+COPY go.\* /app
+WORKDIR /app
+RUN CGO\_ENABLED=0 GOOS=linux go build -o service main.go
+EXPOSE 8000
+CMD \[&quot;/app/service&quot;\]
+</code></pre>
+<p>To set a baseline, I'm just creating a docker image from the golang:1.16 base-image, copy over the sources and compile them.</p>
+<blockquote>
+<p>Image size: 968 Mb (968212150) almost a Gb!</p>
+</blockquote>
+<h2 id="a-multistage-docker-image">A multistage docker image</h2>
+<pre><code data-lang="docker">FROM golang:1.16 AS builderCOPY main.go /app
+COPY go.\* /app
+WORKDIR /app
+RUN CGO\_ENABLED=0 GOOS=linux go build -o dist/service main.go
+ADD https://github.com/krallin/tini/releases/download/v0.19.0/tini-static /tini
+RUN chmod +x /tini
+
+FROM scratch
+COPY --from=builder /app/dist/service /service
+COPY --from=builder /tini /tini
+EXPOSE 8000
+ENTRYPOINT [&quot;/tini&quot;, &quot;--&quot;]
+CMD [&quot;/service&quot;]
+</code></pre>
+<p>Here I'm doing a multistage build, still using the Golang image to build the application but then in the second stage, I copy over the compiled application to a base image called scratch.
+<a rel="noopener external" target="_blank" href="https://hub.docker.com/_/scratch/">Scratch</a> is a special base image which you cannot pull or download, but it is basically a completely empty container to start with.</p>
+<p>As it is empty it also does not contain an init system which normally runs on Linux systems and serves as the root process (PID 1) for all other processes, making sure the right signals are sent to the right process, zombie processes are cleared up etc.
+<a rel="noopener external" target="_blank" href="https://github.com/krallin/tini">Tini</a> is a small init system for containers. this way the application thinks it's running in a ‘normal' Linux system.</p>
+<blockquote>
+<p>Image size: 8.8 Mb (8799493)</p>
+</blockquote>
+<h2 id="remove-debug-info">Remove debug info</h2>
+<p>with the -s -w ldflags you can tell the compiler to not put any debug information in the binary. (for production systems it would be prudent to also create an image with the debug information in case you need to fix an urgent issue)</p>
+<p>The Docker file is the same as above except for the following line</p>
+<pre><code data-lang="docker">RUN CGO\_ENABLED=0 GOOS=linux go build **\-ldflags=&quot;-s -w&quot;** -o dist/service main.go
+</code></pre>
+<blockquote>
+<p>Image size: 6.5 Mb (6559840)</p>
+</blockquote>
+<h2 id="compress-binary-with-upx">Compress binary with UPX</h2>
+<p><a rel="noopener external" target="_blank" href="https://upx.github.io/">UPX</a> is a tool that compresses executables.</p>
+<p>after the compile step in the build stage, the following will download and execute upx on the freshly build application.</p>
+<pre><code data-lang="docker">ADD https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64\_linux.tar.xz upx-3.96-amd64\_linux.tar.xz
+RUN tar -xf upx-3.96-amd64\_linux.tar.xz
+RUN mv upx-3.96-amd64\_linux/upx .
+RUN ./upx --brute /app/dist/service
+</code></pre>
+<blockquote>
+<p>Resulting Image size: 2.6 Mb (2567632)</p>
+</blockquote>
+<h2 id="conclusion">Conclusion</h2>
+<p>to summarize the images created with their sizes</p>
+<table><thead><tr><th>Image</th><th style="text-align: center">Debug info</th><th style="text-align: center">UPX compression</th><th>Size</th><th>Percentage</th></tr></thead><tbody>
+<tr><td>golang</td><td style="text-align: center">yes</td><td style="text-align: center">no</td><td>968212150</td><td>100.00%</td></tr>
+<tr><td>scratch</td><td style="text-align: center">yes</td><td style="text-align: center">no</td><td>8799493</td><td>0.91%</td></tr>
+<tr><td>scratch</td><td style="text-align: center">no</td><td style="text-align: center">no</td><td>6559840</td><td>0.68%</td></tr>
+<tr><td>scratch</td><td style="text-align: center">no</td><td style="text-align: center">yes</td><td>2567632</td><td>0.27%</td></tr>
+</tbody></table>
+<p>We managed to get the image size down to 0.27% of the original which is a lot! Most of the gain was in using the scratch image, which avoided having a complete Linux system installed there.
+Multi-stage builds make it possible to have an image with all the tools needed to build your app and then just copy over the built application to an image that only has the minimum needed to run your application.</p>
+<p>So I hope I've shown you to always try to create the minimal image you need to run your application.</p>
+<p>I used the following to determine the image sizes:</p>
+<pre><code data-lang="bash">&gt; docker inspect -f &quot;{{ .Size }}&quot; gertjana/tinyweb:tiniest
+2567632
+</code></pre>
+<h2 id="references">References</h2>
+<ul>
+<li><a rel="noopener external" target="_blank" href="https://gitlab.com/gertjana/tinyweb">https://gitlab.com/gertjana/tinyweb</a>
+where all the shown code lives</li>
+<li><a rel="noopener external" target="_blank" href="https://hub.docker.com/_/scratch/">https://hub.docker.com/_/scratch/</a>
+Info about the scratch base-image</li>
+<li><a rel="noopener external" target="_blank" href="https://echo.labstack.com/">https://echo.labstack.com/</a>
+minimalistic high-performance web framework</li>
+<li><a rel="noopener external" target="_blank" href="https://github.com/krallin/tini">https://github.com/krallin/tini</a>
+a small but valid ini t system</li>
+<li><a rel="noopener external" target="_blank" href="https://upx.github.io/">https://upx.github.io/</a>
+a free, portable, extendable, high-performance executable packer</li>
+</ul>
+<h2 id="image-attribution">Image attribution</h2>
+<p>courtesy <a rel="noopener external" target="_blank" href="https://unsplash.com/@guibolduc">https://unsplash.com/@guibolduc</a></p>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>

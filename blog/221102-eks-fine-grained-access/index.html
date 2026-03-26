@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>How to use AWS services from EKS with fine-grained access control - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="bind service accounts to IAM roles to allow fine grained access control from k8s resources." />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="How to use AWS services from EKS with fine-grained access control" />
+<meta property="og:description" content="bind service accounts to IAM roles to allow fine grained access control from k8s resources." />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;221102-eks-fine-grained-access&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;eks_fine_grained_access.jpg" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2022-11-02T00:00:00Z" />
+
+
+<meta property="article:tag" content="aws" />
+
+<meta property="article:tag" content="eks" />
+
+<meta property="article:tag" content="oidc" />
+
+<meta property="article:tag" content="python" />
+
+<meta property="article:tag" content="boto3" />
+
+<meta property="article:tag" content="featured" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="How to use AWS services from EKS with fine-grained access control" />
+    <meta name="twitter:description" content="bind service accounts to IAM roles to allow fine grained access control from k8s resources." />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;eks_fine_grained_access.jpg
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;221102-eks-fine-grained-access&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/blog/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">How to use AWS services from EKS with fine-grained access control</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2022-11-02</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+        <span class="featured-badge">Featured</span>
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+      
+        
+          <a href="/tags/aws/" class="tag">aws</a>
+        
+      
+        
+          <a href="/tags/eks/" class="tag">eks</a>
+        
+      
+        
+          <a href="/tags/oidc/" class="tag">oidc</a>
+        
+      
+        
+          <a href="/tags/python/" class="tag">python</a>
+        
+      
+        
+          <a href="/tags/boto3/" class="tag">boto3</a>
+        
+      
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">bind service accounts to IAM roles to allow fine grained access control from k8s resources.</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;eks_fine_grained_access.jpg" alt="How to use AWS services from EKS with fine-grained access control" />
+      
+
+      <div class="post-markdown-content">
+        <p>At my company, where I am part of the SRE team, we are using <a rel="noopener external" target="_blank" href="https://aws.amazon.com/eks/">EKS</a> (Amazon's managed Kubernetes service) to run our applications and services.
+We also use it to deploy those applications and services and increasingly serverless stacks with cloud formation or terraform.</p>
+<p>But how do we keep our systems secure and stable while allowing the dev teams to build, deploy, monitor and debug their applications as they see fit?</p>
+<p>Kubernetes has the concept of service accounts. these are k8s resources that allow other k8s resources like pods for instance to interact with k8s and external services.</p>
+<p>EKS allows you to bind those service accounts to IAM Roles allowing fine-grained control on what AWS Services a k8s resource can interact with.
+This is possible as EKS can authenticate by using an <a rel="noopener external" target="_blank" href="https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html">OIDC Provider</a> (follow the link to see how that connects Service accounts and IAM Roles.)</p>
+<p>For us, this means we can give development teams the possibility to deploy their k8s deployments, cloud formation stacks and big data jobs through CI/CD pipelines in their namespaces without having to give them extensive access to the AWS Console.</p>
+<p>How that all works in detail is for another blog entry, what I want to show here is that if you want to interact with AWS services from within your application or job, you need to be able to assume that role that is bound to that service account.</p>
+<p>The example I'm showing uses Python and the Boto3 library, but this should be possible in any language that has an AWS client library or SDK that support STS (Secure Token Service)</p>
+<pre><code data-lang="python">import os
+import boto3
+
+role_arn = os.getenv(&quot;AWS_ROLE_ARN&quot;)
+
+web_identity_token = None
+with open(os.getenv(&quot;AWS_WEB_IDENTITY_TOKEN_FILE&quot;), &#39;r&#39;) as f:
+  web_identity_token = f.read()
+
+sts_client = boto3.client(&quot;sts&quot;)
+sts_role_resp = sts_client.assume_role_with_web_identity(
+                  RoleArn=role_arn,
+                  RoleSessionName=&quot;My Session&quot;,
+                  WebIdentityToken=web_identity_token
+                )
+
+sts_role_creds = {
+  &quot;AccessKeyId&quot;: sts_role_resp[&#39;Credentials&#39;][&#39;AccessKeyId&#39;],
+  &quot;SecretAccessKey&quot;: sts_role_resp[&#39;Credentials&#39;][&#39;SecretAccessKey&#39;],
+  &quot;SessionToken&quot;: sts_role_resp[&#39;Credentials&#39;][&#39;SessionToken&#39;]
+}
+
+# code here that does whatever you need doing, that the role you assume allows you to
+# in this case list all s3 bucket names
+s3_resource=boto3.resource(&#39;s3&#39;,
+    aws_access_key_id=sts_role_creds[&#39;AccessKeyId&#39;],
+    aws_secret_access_key=sts_role_creds[&#39;SecretAccessKey&#39;],
+    aws_session_token=sts_role_creds[&#39;SessionToken&#39;],
+)
+
+for bucket in s3_resource.buckets.all():
+    print(bucket.name)
+</code></pre>
+<p>As you can see once the service account role bindings are set up the following environment variables are available:</p>
+<table><thead><tr><th>ENV var</th><th>description</th></tr></thead><tbody>
+<tr><td>AWS_ROLE_ARN</td><td>The Role to assume</td></tr>
+<tr><td>AWS_WEB_IDENTITY_TOKEN_FILE</td><td>the file location containing a token to authenticate against</td></tr>
+</tbody></table>
+<p>Hopefully, I've given you some ideas on how to run AWS workloads in EKS.</p>
+<p>Thanks for reading.</p>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>

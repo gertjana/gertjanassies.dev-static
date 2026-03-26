@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>All those online meetings - part 2 - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="Some improvements to the original design" />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="All those online meetings - part 2" />
+<meta property="og:description" content="Some improvements to the original design" />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;220801-online-meetings2&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;online_meetings2_top.png" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2022-08-01T00:00:00Z" />
+
+
+<meta property="article:tag" content="pico" />
+
+<meta property="article:tag" content="kicad" />
+
+<meta property="article:tag" content="python" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="All those online meetings - part 2" />
+    <meta name="twitter:description" content="Some improvements to the original design" />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;online_meetings2_top.png
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;220801-online-meetings2&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/blog/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">All those online meetings - part 2</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2022-08-01</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/make/" class="category">make</a>
+      
+      
+        
+          <a href="/tags/pico/" class="tag">pico</a>
+        
+      
+        
+          <a href="/tags/kicad/" class="tag">kicad</a>
+        
+      
+        
+          <a href="/tags/python/" class="tag">python</a>
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">Some improvements to the original design</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;online_meetings2_top.png" alt="All those online meetings - part 2" />
+      
+
+      <div class="post-markdown-content">
+        <p>A while ago I blogged about a small project with a Raspberry Pi Pico and a couple of buttons to make a tool that could help me in all those online meetings when we all had to work from home during Covid.</p>
+<p>I'm just explaining the changes here, so If you want to get the full picture, please read the first part of the article:
+<a href="/blog/210619_online_meetings">All those online meetings - part 1</a></p>
+<p>Now it works pretty well but there were some improvements to be made</p>
+<ul>
+<li>I needed one of the buttons to do a "raise hand"</li>
+<li>Because of that I needed another way to switch between Hangouts/Teams/Zoom</li>
+</ul>
+<p>A 3-way slider switch should do the trick, now my schematic looks like this (power comes from the USB connector):</p>
+<Image path="/content-images/online_meetings2_1.png" alt="Schematic" thumbnail_width="600" />
+<p>All I need is a change in the code to check GPIO13, 14 and 15 and whichever one is 0/false/low I had to set the keymap for the right conference tool.
+Because I configured the GPIO ports to use a pull-up resistor an open switch will be 1 (resistor pulls the input to the + Voltage) and closing the switch will pull it to 0 (ground) with the resistor protecting it from shortening out.</p>
+<pre><code data-lang="python">switch = [board.GP13, board.GP14, board.GP15]
+for s in range(3):
+    switch[s] = DigitalInOut(switch[s])
+    switch[s].direction = Direction.Input
+    switch[s].pull = Pull.Up
+
+keymap = {}
+keymap_teams    = { (0): (KeyCode.CONTROL, KeyCode.SHIFT, KeyCode.M),
+                    (1): (KeyCode.CONTROL, KeyCode.SHIFT, KeyCode.O),
+                    (2): (KeyCode.CONTROL, KeyCode.SHIFT, KeyCode.K)}
+keymap_zoom     = { (0): (KeyCode.CONTROL, KeyCode.SHIFT, KeyCode.A),
+                    (1): (KeyCode.GUI, KeyCode.SHIFT, KeyCode.V),
+                    (2): (KeyCode.GUI, KeyCode.Y)}
+keymap_hangouts = { (0): (KeyCode.ALT, KeyCode.D),
+                    (1): (KeyCode.GUI, KeyCode.E),
+                    (2): (KeyCode.GUI, KeyCode.CONTROL, KeyCode.H)}
+
+def get_keymap():
+    if not switch[0].value:
+        return keymap_teams
+    if not switch[1].value:
+        return keymap_zoom
+    if not switch[2].value:
+        return keymap_hangouts
+
+keymaps = get_keymap()
+</code></pre>
+<p>Now about the hardware, the first version was done with Fritzing which is a nice enough tool. but it has some peculiarities, that make it hard to get right.
+So for this one, I used <a rel="noopener external" target="_blank" href="https://www.kicad.org/">KiCad 6</a> and I must say it has evolved a lot since I first started using it ages ago.</p>
+<p>One thing with Electronic design software is always having the right part libraries and KiCad delivers here. I'm using Cherry MX keys that I have lying around. and those are fully supported. For the Raspberry Pi Pico board, a quick google revealed a <a rel="noopener external" target="_blank" href="https://github.com/ncarandini/KiCad-RP-Pico">GitHub repo</a>f with the part and PCB footprint</p>
+<p>The switch part took a bit longer, I had already ordered and received the switch, but it wasn't in the library, fortunately, its little brother a 2-way switch was. as you can see in the screenshot</p>
+<Image path="/content-images/online_meetings2_3.png" alt="PCB_key_2way" thumbnail_width="600" />
+<p>Now the switch I had looked exactly the same but it had one more pin and some more spacing.
+So in KiCad's footprint editor, I copied the one above. saw that the pad spacing was 2 mm. so I could move on off the outer pins to the left and duplicate one of the other pins. update the pin numbers in the properties to match up with the 3-way switch schematic part. and for completeness updated the silkscreen mask and part number.</p>
+<Image path="/content-images/online_meetings2_4.png" alt="PCB_key_3way" thumbnail_width="600" />
+<p>Now I have all the parts that I need, in the schematic, I assigned all the footprints to the relevant parts and after satisfying the Electrical Rules Checker I clicked Update PCB from Schematic.</p>
+<p>Now in the PCB editor it's just placing the components and routing everything but the GND on the top layer. and then creating a ground plane for the GND net on the bottom layer.
+I had to make one via to get the GND from the raspberry pi board which will be soldered on top to the bottom layer and part of the ground plane.
+Running the Design Rule Checker revealed some warnings but overall it was happy with my design.</p>
+<p>Here's the end result:</p>
+<p>Last time I ordered the PCB boards from <a rel="noopener external" target="_blank" href="https://aisler.net/">Aisler</a>. and I found out that they have a plugin for KiCad, which makes it super easy to upload the PCB to Aisler (one click) and from there. a quick check, going over all the settings, the defaults were good enough. and pressing the produce button. and then waiting a week or so. I had to pay around 15 Euro. which is a really good value for the quality they deliver.</p>
+<p>I'm very impressed with KiCad, of course having used other electronic design tools in the past (Ultiboard, Eagle. Fritzing) made it a bit easier. but I felt like KiCad had the most gradual learning curve of them all.
+I managed to create the schematic, PCB and extra footprint in about 3 hours.</p>
+<p>All the code and designs are here: <a rel="noopener external" target="_blank" href="https://gitlab.com/gertjana/conference-buttons">https://gitlab.com/gertjana/conference-buttons</a></p>
+<p>Thanks for reading. and hopefully, I inspired you to start doing your own little projects.</p>
+<p>next steps: Create a 3D printed case for it…. <em>is firing up Fusion360</em></p>
+<p>Continueing in Part 3:
+<a href="/blog/220918_online_meetings3">All those online meetings - Part 3</a></p>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>

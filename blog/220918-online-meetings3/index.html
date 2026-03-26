@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>All those online meetings - Part 3 - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="In the previous two blogs, I explained the idea and execution of a small device that would allow me to mute&#x2F;unmute audio&#x2F;video and raise a hand in video calls with hangouts, zoom or teams." />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="All those online meetings - Part 3" />
+<meta property="og:description" content="In the previous two blogs, I explained the idea and execution of a small device that would allow me to mute&#x2F;unmute audio&#x2F;video and raise a hand in video calls with hangouts, zoom or teams." />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;220918-online-meetings3&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;online_meetings3_top.png" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2022-09-18T00:00:00Z" />
+
+
+<meta property="article:tag" content="pico" />
+
+<meta property="article:tag" content="kicad" />
+
+<meta property="article:tag" content="fusion360" />
+
+<meta property="article:tag" content="3dprint" />
+
+<meta property="article:tag" content="featured" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="All those online meetings - Part 3" />
+    <meta name="twitter:description" content="In the previous two blogs, I explained the idea and execution of a small device that would allow me to mute&#x2F;unmute audio&#x2F;video and raise a hand in video calls with hangouts, zoom or teams." />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;online_meetings3_top.png
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;blog&#x2F;220918-online-meetings3&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/blog/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">All those online meetings - Part 3</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2022-09-18</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+        <span class="featured-badge">Featured</span>
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/make/" class="category">make</a>
+      
+      
+        
+          <a href="/tags/pico/" class="tag">pico</a>
+        
+      
+        
+          <a href="/tags/kicad/" class="tag">kicad</a>
+        
+      
+        
+          <a href="/tags/fusion360/" class="tag">fusion360</a>
+        
+      
+        
+          <a href="/tags/3dprint/" class="tag">3dprint</a>
+        
+      
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">In the previous two blogs, I explained the idea and execution of a small device that would allow me to mute&#x2F;unmute audio&#x2F;video and raise a hand in video calls with hangouts, zoom or teams.</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;online_meetings3_top.png" alt="All those online meetings - Part 3" />
+      
+
+      <div class="post-markdown-content">
+        <h2 id="wrapping-it-up-in-a-case-actually">Wrapping it up, in a case actually</h2>
+<p>In the previous two blogs, I explained the idea and execution of a small device that would allow me to mute/unmute audio/video and raise a hand in video calls with hangouts, zoom or teams.
+Here are the links to both previous articles</p>
+<p>Part 1: <a href="/post/210619_online_meetings">All those online meetings - Part 1</a>
+Part 2: <a href="/post/220801_online_meetings2">All those online meetings - Part 2</a></p>
+<p>So it was working, and I was actually using it, but it was just a PCB (printed circuit board) laying on my desk. so I started thinking about creating a case for it. here's a picture of the PCB in its latest revision.
+the Link in the references will take you to this board on Aisler's website.</p>
+<Image path="/content-images/online_meetings3_1.png" alt="PCB" thumbnail_width="600" />
+<p>I wanted the electronics to be visible so something transparent, which also would benefit from seeing the small OLED display I've added in the meantime.
+So I decided to make the top and bottom 2 mm Acrylic.</p>
+<p>so let's spin up Fusion360. this is by far the best 3D CAD design tool I've worked with, and it is free for personal use (the link in the references takes you to the “for personal use” page), you do have to go through some hoops every year when that personal license expires.</p>
+<p>From the PCB design in <a rel="noopener external" target="_blank" href="https://www.kicad.org/">Kicad</a>, I exported the edges of the board, the drill holes in the corner as well as the edges of all the switches as a DXF file and imported that into Fusion360, now most designs in Fusion360 start with a 2D sketch.</p>
+<Image path="/content-images/online_meetings3_2.png" alt="Sketch" thumbnail_width="600" />
+<p>Which you then can extrude into the 3D shape required. and that allowed me to create the sides of the case. I extruded the sketch above two times, once with a height of 2mm for the part under the PCB and once with a height of 7mm for the part above the PCB.
+making an opening for the USB connector was nothing more than creating a box a little bigger than the USB plug and then subtracting it from the shape of the case. the result is shown here, both the top and bottom are already in their correct position, and you can imagine the PCB fitting in between them.</p>
+<Image path="/content-images/online_meetings3_3.png" alt="3D Model for the sides" thumbnail_width="600" />
+<p>3D model for printing the sides of the case</p>
+<p>I also uploaded a slightly different version of that exported dxf file to the <a rel="noopener external" target="_blank" href="http://www.laserlokaal.nl">website</a> of a company that would laser-cut the top and bottom acrylic for me.</p>
+<Image path="/content-images/online_meetings3_4.png" alt="lasercut dxf design" thumbnail_width="600" />
+<p>The featured picture is a rendering done within Fusion360, all the 3D models for the electronic parts were found on grabcad.com except for the 3-way switch, but from the part shop I bought the part from, there was a possibility to render a CAD model for that part.
+Fusion360 also can do animations. so here is one for an exploding view, which really shows you how it all fits together:</p>
+<Image path="/content-images/online_meetings3_5.gif" alt="Exploding view animation" thumbnail_width="600" />
+<p>So what did it all cost me?</p>
+<table><thead><tr><th>Item</th><th>Qnty</th><th>Price</th><th>Remarks</th></tr></thead><tbody>
+<tr><td>PCB</td><td>1</td><td>€5.58</td><td>Aisler (minimum order 3)</td></tr>
+<tr><td>Acryl top+bottom</td><td>1</td><td>€12.30</td><td>Laserlokaal</td></tr>
+<tr><td>3D Print top+bot sides</td><td>1</td><td>€0.29</td><td>(Filament cost)</td></tr>
+<tr><td>RPI Pico RP2040</td><td>1</td><td>€2.20</td><td></td></tr>
+<tr><td>SSD1306</td><td>1</td><td>€2.20</td><td></td></tr>
+<tr><td>MX Keys</td><td>3</td><td>€3.03</td><td></td></tr>
+<tr><td>Switch</td><td>1</td><td>€0.65</td><td></td></tr>
+<tr><td>Key caps</td><td>3</td><td>€3.35</td><td></td></tr>
+<tr><td>M2x4 self tapping</td><td>4</td><td>€0.07</td><td></td></tr>
+<tr><td>M2x8 self tapping</td><td>4</td><td>€0.07</td><td></td></tr>
+</tbody></table>
+<p>Total                        <strong>€29.81</strong></p>
+<p>All in all, I very much enjoyed this little project, for all the details, design files and source code go have a look at the repo:
+<a rel="noopener external" target="_blank" href="https://gitlab.com/gertjana/conference-buttons">https://gitlab.com/gertjana/conference-buttons</a></p>
+<p>How to program the board for the OLED display is something for another blog.</p>
+<p>Hope you enjoyed it and maybe even inspired you.
+Let me know if you have any questions or improvements.</p>
+<h2 id="references">References</h2>
+<ol>
+<li><a rel="noopener external" target="_blank" href="http://www.kicad.org">Kicad</a> (Schematic and PCB Design)</li>
+<li><a rel="noopener external" target="_blank" href="https://aisler.net/p/HXAFRBPY">Aisler</a> (online PCB Manufacturing)</li>
+<li><a rel="noopener external" target="_blank" href="http://www.laserlokaal.nl">Laser Lokaal</a> (online Laser cutting/engraving)</li>
+<li><a rel="noopener external" target="_blank" href="https://www.autodesk.com/products/fusion-360/personal">Fusion360</a> (Information about how to get a free personal license)</li>
+<li><a rel="noopener external" target="_blank" href="https://grabcad.com/library">Grabcad</a> (Community sharing lots of 3D Models)</li>
+<li><a rel="noopener external" target="_blank" href="https://gitlab.com/gertjana/conference-buttons">Gitlab Repo</a> (Contains Everything described here, Code, design files, etc)</li>
+</ol>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>
