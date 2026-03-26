@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-page">
+  <div class="page-view-container">
+    {{ section.content | safe }}
+
+    <div class="posts-container">
+      <div class="posts-list">
+        {% set all_posts = get_section(path="blog/_index.md") %}
+        {% for post in all_posts.pages %}
+          {% if post.extra.image is defined and post.extra.image %}
+            {% set has_image = true %}
+          {% else %}
+            {% set has_image = false %}
+          {% endif %}
+          {% if "featured" in post.taxonomies.tags %}
+          <article class="post-list-item">
+            <div class="post-image-section">
+              <div class="post-image">
+                {% if has_image %}
+                  <img src="{{ post.extra.image }}" alt="{{ post.title }}" />
+                {% else %}
+                  <div class="placeholder-image"></div>
+                {% endif %}
+              </div>
+              <div class="post-meta">
+                <time class="post-date">{{ post.date | date(format="%Y-%m-%d") }}</time>
+                <span class="post-author">By {{ post.extra.author | default(value="Gertjan Assies") }}</span>
+              </div>
+            </div>
+            <div class="post-content">
+              <div class="post-header">
+                <h2 class="post-title">
+                  <a href="{{ post.permalink }}">{{ post.title }}</a>
+                </h2>
+                <div class="post-taxonomy">
+                  {% for cat in post.taxonomies.categories | default(value=[]) %}
+                    <a href="/categories/{{ cat | slugify }}/" class="category">{{ cat }}</a>
+                  {% endfor %}
+                  {% for tag in post.taxonomies.tags | default(value=[]) %}
+                    {% if tag != "featured" %}
+                      <a href="/tags/{{ tag | slugify }}/" class="tag">{{ tag }}</a>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+              {% if post.description %}
+                <p class="post-summary">{{ post.description }}</p>
+              {% endif %}
+            </div>
+          </article>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

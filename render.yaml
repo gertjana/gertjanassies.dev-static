@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: gertjanassies-dev
+    runtime: static
+    buildCommand: zola build
+    staticPublishPath: public
+    pullRequestPreviewsEnabled: false
+    routes:
+      - type: rewrite
+        source: /404
+        destination: /404.html

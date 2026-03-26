@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - gertjanassies.dev{% endblock title %}
+
+{% block content %}
+<div class="blog-page">
+  <div class="page-view-container">
+    <h1>Categories</h1>
+    <div class="taxonomy-list">
+      {% for term in terms %}
+        <a href="{{ term.permalink }}" class="category taxonomy-term">
+          {{ term.name }} <span class="taxonomy-count">({{ term.pages | length }})</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock content %}

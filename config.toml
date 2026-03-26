@@ -1,0 +1,22 @@
+base_url = "https://gertjanassies.dev"
+title = "gertjanassies.dev"
+description = "Gertjan Assies personal blog, articles about coding and the maker space"
+default_language = "en"
+compile_sass = true
+build_search_index = false
+minify_html = false
+
+taxonomies = [
+  {name = "categories", paginate_by = 20, feed = false},
+  {name = "tags", paginate_by = 20, feed = false},
+]
+
+[markdown]
+render_emoji = false
+external_links_target_blank = true
+external_links_no_follow = false
+smart_punctuation = false
+
+[extra]
+author = "Gertjan Assies"
+base_url = "https://gertjanassies.dev"

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} - gertjanassies.dev{% endblock title %}
+
+{% block description %}
+<meta name="description" content="{{ page.description | default(value=config.description) }}" />
+{% endblock description %}
+
+{% block og %}
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="{{ page.title }}" />
+<meta property="og:description" content="{{ page.description | default(value=config.description) }}" />
+<meta property="og:url" content="{{ page.permalink }}" />
+{% if page.extra.image %}
+<meta property="og:image" content="{{ config.base_url }}{{ page.extra.image }}" />
+{% else %}
+<meta property="og:image" content="{{ config.base_url }}/logo_ga.svg" />
+{% endif %}
+<meta property="article:author" content="{{ page.extra.author | default(value='Gertjan Assies') }}" />
+{% if page.date %}
+<meta property="article:published_time" content="{{ page.date | date(format='%Y-%m-%dT00:00:00Z') }}" />
+{% endif %}
+{% for tag in page.taxonomies.tags | default(value=[]) %}
+<meta property="article:tag" content="{{ tag }}" />
+{% endfor %}
+{% endblock og %}
+
+{% block twitter_card %}summary_large_image{% endblock twitter_card %}
+{% block twitter_title %}{{ page.title }}{% endblock twitter_title %}
+{% block twitter_description %}{{ page.description | default(value=config.description) }}{% endblock twitter_description %}
+{% block twitter_image %}
+{% if page.extra.image %}{{ config.base_url }}{{ page.extra.image }}{% else %}{{ config.base_url }}/logo_ga.svg{% endif %}
+{% endblock twitter_image %}
+
+{% block og_url %}{{ page.permalink }}{% endblock og_url %}
+{% block canonical %}{{ page.permalink }}{% endblock canonical %}
+
+{% block content %}
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">{{ page.title }}</h1>
+
+    <div class="post-view-meta">
+      {% if page.date %}
+        <time class="post-date">{{ page.date | date(format="%Y-%m-%d") }}</time>
+      {% endif %}
+      <span class="post-author">By {{ page.extra.author | default(value="Gertjan Assies") }}</span>
+      {% set page_tags = page.taxonomies.tags | default(value=[]) %}
+      {% if "featured" in page_tags %}
+        <span class="featured-badge">Featured</span>
+      {% endif %}
+    </div>
+
+    <div class="post-view-taxonomy">
+      {% for cat in page.taxonomies.categories | default(value=[]) %}
+        <a href="/categories/{{ cat | slugify }}/" class="category">{{ cat }}</a>
+      {% endfor %}
+      {% for tag in page.taxonomies.tags | default(value=[]) %}
+        {% if tag != "featured" %}
+          <a href="/tags/{{ tag | slugify }}/" class="tag">{{ tag }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if page.description %}
+      <p class="post-view-summary">{{ page.description }}</p>
+    {% endif %}
+
+    <div class="post-view-content">
+      {% if page.extra.image %}
+        <img class="post-view-featured-image" src="{{ page.extra.image }}" alt="{{ page.title }}" />
+      {% endif %}
+
+      <div class="post-markdown-content">
+        {{ page.content | safe }}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock content %}
