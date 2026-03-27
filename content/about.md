@@ -26,12 +26,12 @@ Software Development professional with over 25 years of experience where I've do
 
 | Area | Experience |
 |------|------------|
-| Software Engineering | C#, Java, Javascript, Python, Scala, Elixir, Haskell, Go, Typescript, Rust |
+| Software Engineering | Scala, Rust, Elixir, Go, Typescript, Kotlin, C#, Java, Javascript, Python, Haskell |
 | Cloud Engineering | Certified AWS Solutions Architect associate, Certified Terraform practitioner |
 | Site Reliability Engineering | (the Google kind) CI/CD, Observability, Scalability  |
 | Agile | Certified Scrummaster, Certified Kanban Management Professional |
 | Leadership | Technical Product Owner / Teamlead |
-| Electronics Engineering | Embedded controllers, IoT, LoRa |
+| Electronics Engineering | Embedded controllers, IoT, LoRa, FPGA |
 
 ### Certifications
 
