@@ -378,6 +378,16 @@ article:not(.post-list-item):not(.post-card) {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.float-right {
+  float: right;
+  margin: 0 0 1rem 1.5rem;
+}
+
+.float-left {
+  float: left;
+  margin: 0 1.5rem 1rem 0;
+}
+
 .post-markdown-content a {
   color: #007bff;
   text-decoration: none;

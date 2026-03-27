@@ -4,10 +4,11 @@ template = "page.html"
 weight = 1
 +++
 
+<img src="/content-images/gertjan_kariktuur.png" alt="me" class="float-right" />
+
 ## About me
 
 ### Personally
-
 I'm just a guy who (in random order) likes to:
 
 * read or binge watch SF & fantasy
