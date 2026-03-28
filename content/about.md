@@ -16,7 +16,7 @@ I'm just a guy who (in random order) likes to:
 * print stuff in 3D
 * loves to cook gourmet meals
 * program (functionally) in Scala, Elixir, Go, Rust, Typescript and others
-* experiment with Arduino's, Raspberry Pi's, ESP32's, Pico's and FPGA's
+* experiment with Arduino's, Raspberry Pi's, ESP32's and FPGA's
 * automate his home
 * enjoy nature and culture with his partner
 * play (VR) games
