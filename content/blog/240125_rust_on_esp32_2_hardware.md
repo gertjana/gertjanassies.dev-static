@@ -4,7 +4,7 @@ date = '2024-01-25'
 description = 'Focusing on the minimal hardware needed to build an EV Charger with Rust on a ESP32'
 [taxonomies]
 categories = ['code', 'make']
-tags = ['rust', 'embedded', 'esp32', 'featured']
+tags = ['rust', 'embedded', 'esp32']
 [extra]
 author = 'Gertjan Assies'
 image = '/content-images/rusty_charger.webp'

@@ -4,7 +4,7 @@ date = '2024-01-04'
 description = 'Creating applications for ESP32 microcontrollers with the power of the Rust programming language.'
 [taxonomies]
 categories = ['code', 'make']
-tags = ['rust', 'embedded', 'esp32', 'featured']
+tags = ['rust', 'embedded', 'esp32']
 [extra]
 author = 'Gertjan Assies'
 image = '/content-images/rust_on_esp32.png'

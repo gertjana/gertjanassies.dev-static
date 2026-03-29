@@ -4,7 +4,7 @@ date = '2025-12-02'
 description = 'A small excursion into the makerspace using MicroPython and the Adafruit Neo Trinkey to build a device that keeps your laptop awake - no more awkward screen timeouts during presentations!'
 [taxonomies]
 categories = ['code', 'make']
-tags = ['micropython', 'embedded', 'hardware', 'circuitpython', 'makerspace', 'featured']
+tags = ['micropython', 'embedded', 'hardware', 'circuitpython', 'makerspace']
 [extra]
 author = 'Gertjan Assies'
 image = '/content-images/neo_trinkey.jpg'
