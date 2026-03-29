@@ -24,7 +24,8 @@ For instance here it is running a program, that uses the SHL (Shift left) and SH
 
 <img alt="MAX1000" src="/content-images/max_1000_knightrider.gif" class="float-right" />
 
-```asm6502
+```nasm
+
         LDI  R1, 0x80       ; R1 = 0x20  - leftmost edge
         LDI  R2, 1          ; R2 = 0x01  — rightmost edge
         MOV  R7, R1         ; R7 = 0x80 (LED[0] on), start scanning right
