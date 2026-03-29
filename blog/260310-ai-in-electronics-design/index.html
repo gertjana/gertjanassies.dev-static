@@ -150,7 +150,26 @@ https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;debugging_max1000.p
 <h2 id="improving-the-situation">Improving the situation</h2>
 <p>But where it comes to visualisation, the <a rel="noopener external" target="_blank" href="https://www.trenz-electronic.de/en/MAX1000-IoT-Maker-Board-16kLE-32-MByte-RAM-8-MByte-Flash-6.15-x-2.5-cm/TEI0001-04-FBC84A">MAX1000 FPGA board</a> has 8 leds in a row, which I use to show the Program counter and the Carry and Overflow flags and with a push of a button the contents of one of the 8bit registers.</p>
 <p>For instance here it is running a program, that uses the SHL (Shift left) and SHR (Shift right) instructions to simulate the light pattern on the KITT car from the Knightrider television series</p>
-<p><img src="/content-images/knightrider_program.png" alt="Program" /> <img src="/content-images/max_1000_knightrider.gif" alt="MAX1000" /></p>
+<img alt="MAX1000" src="/content-images/max_1000_knightrider.gif" class="float-right" />
+<pre><code data-lang="assembler">        LDI  R1, 0x20       ; R1 = 0x20
+        LDI  R2, 1          ; R2 = 0x01  — rightmost edge
+        MOV  R7, R1         ; R7 = 0x80 (LED[0] on), start scanning right
+        OUT  R7, 2          ; display initial pattern
+
+scan_right:
+        CMP  R7, R2         ; R7 == 0x01 (rightmost edge)?
+        JZ   scan_left      ; yes → reverse, scan left
+        SHR  R7, R7         ; no  → step right
+        OUT  R7, 2          ; display updated pattern
+        JMP  scan_right
+
+scan_left:
+        CMP  R1, R7         ; R7 == 0x80 (leftmost edge)?
+        JZ   scan_right     ; yes → reverse, scan right
+        SHL  R7, R7         ; no  → step left
+        OUT  R7, 2          ; display updated pattern
+        JMP  scan_left
+</code></pre>
 <h2 id="moar-visuals">Moar visuals</h2>
 <p>So lets add a small OLED Screen, the board has an 12 pin connector to interface with the outside world in a standardized manner, and you can buy amongst other things a 128x32 OLED Display based on the SSD1306 chip which has an SPI Interface to be able to control it.</p>
 <p>Now while the display is on order. I started the SPI Implementation. (It's a bit different from working with Arduino's as they have loads of libraries available)</p>
