@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>TOTP Exercise - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="As an exercise, I wanted to see if I could get TOTP codes used for multi factor authentication visible without having to resort to the Google Authenticator app." />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="TOTP Exercise" />
+<meta property="og:description" content="As an exercise, I wanted to see if I could get TOTP codes used for multi factor authentication visible without having to resort to the Google Authenticator app." />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;210610-totp-exercise&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;totp_exercise.jpg" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2021-06-10T00:00:00Z" />
+
+
+<meta property="article:tag" content="totp" />
+
+<meta property="article:tag" content="tips" />
+
+<meta property="article:tag" content="python" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="TOTP Exercise" />
+    <meta name="twitter:description" content="As an exercise, I wanted to see if I could get TOTP codes used for multi factor authentication visible without having to resort to the Google Authenticator app." />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;totp_exercise.jpg
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;210610-totp-exercise&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/post/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">TOTP Exercise</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2021-06-10</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+      
+        
+          <a href="/tags/totp/" class="tag">totp</a>
+        
+      
+        
+          <a href="/tags/tips/" class="tag">tips</a>
+        
+      
+        
+          <a href="/tags/python/" class="tag">python</a>
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">As an exercise, I wanted to see if I could get TOTP codes used for multi factor authentication visible without having to resort to the Google Authenticator app.</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;totp_exercise.jpg" alt="TOTP Exercise" />
+      
+
+      <div class="post-markdown-content">
+        <p>TOTP stands for <a rel="noopener external" target="_blank" href="https://en.wikipedia.org/wiki/Time-based_One-Time_Password">Time-based One Time Password</a> and is an algorithm that most MFA (<a rel="noopener external" target="_blank" href="https://en.wikipedia.org/wiki/Multi-factor_authentication">Multi-Factor Authentication</a>) devices use</p>
+<p>for obvious security reasons, I have set up MFA on all accounts that support it. but this can be a bit cumbersome in some situations.</p>
+<p>Especially when you are working with Serverless applications on AWS. I work a lot with Cloudformation and SAM but that does mean that during the day I'll be typing in MFA codes a lot.</p>
+<p>As an exercise, I wanted to see if I could get those codes visible without having to resort to the Google Authenticator app.</p>
+<p>What if I could have that code show up in the touch bar on my mac.
+I know, I know MFA needs to be another device! so a disclaimer:</p>
+<blockquote>
+<p>What is described below will lower the security of your system and your accounts: do so at your own risk!</p>
+</blockquote>
+<p>but if I would do this, at least I would need to do the following:</p>
+<ul>
+<li>use sudo to enable it and disable it automatically after a certain amount of time.</li>
+<li>only shows it in the touch bar after pressing a secret key combination.</li>
+<li>store any secrets in the keychain.</li>
+</ul>
+<p>I'm already using a tool called <a rel="noopener external" target="_blank" href="https://folivora.ai/">BetterTouchTool</a> that allows customisation of the touch bar on my mac.</p>
+<p>so first of all how do we get that code?</p>
+<p>Whenever you add an application to for instance Google Authenticator, you have to scan a QR Code. this QR Code contains a secret if you would scan that with a normal QR code scanner you will get this URL with a secret param: (the account and secret are replaced by placeholders here)</p>
+<pre><code data-lang="sh">otpauth://totp/Amazon%20Web%20Services:\[account\]?secret=\[secret\]&amp;issuer=Amazon%20Web%20Services
+</code></pre>
+<p>Now here you can see that it uses TOTP (Timebase One Time Password) which is an extension to HOTP (HMAC-Based One Time Password)</p>
+<p>to summarize really quickly:</p>
+<p>HOTP uses a hash algorithm to create a digest from the secret and a counter) TOTP introduces a time-based component for the counter (the counter is x second (default is 30) steps counted from the epoch)</p>
+<p>Now Python has an <a rel="noopener external" target="_blank" href="https://github.com/pyauth/pyotp">OTP library</a> that can create the MFA code from that secret.</p>
+<pre><code data-lang="python">#!/usr/bin/env python3import pyotp
+import syssecret = sys.argv\[1\]
+totp = pyotp.TOTP(secret)
+print(totp.now())
+</code></pre>
+<p>This will when you give it a secret return the 6 digit code</p>
+<p>To not have the secret in my scripts I've added it to the keychain with</p>
+<pre><code data-lang="sh">security add-generic-password -a \[account\] -s totp-exercise -w \[secret\]
+</code></pre>
+<p>and retrieve it again in a bash script</p>
+<pre><code data-lang="bash">#!/bin/bash
+me=\`whoami\`
+secret=\`security find-generic-password -a $me -s totp-exercise -w\`
+echo \`python3 \[path\]/get\_code.py $secret\`
+</code></pre>
+<p>so now I have something I can call from BetterTouchTool:</p>
+<p>In BetterTouchTool you can create a button (widget) and then run an AppleScript when started and another one when you press the button, you can also define a key combination to only show it when pressed.</p>
+<p>so when starting it It will run this AppleScript: it will execute the script and set the text property with the result to have it shown as the button text</p>
+<pre><code data-lang="applescript">set code to do shell script &quot;/Users/\[account\]/btt\_scripts/code\_aws.sh&quot;
+return &quot;{\\&quot;text\\&quot;:\\&quot;&quot; &amp; code &amp; &quot;\\&quot;}&quot;
+</code></pre>
+<p>when pressed it gets the latest code again but now put the code on the clipboard</p>
+<pre><code data-lang="applescript">set code to do shell script &quot;/Users/\[account\]/btt\_scripts/code\_aws.sh&quot;
+set the clipboard to code as text
+</code></pre>
+<p>To conclude with the pytotp library it is trivial to build your own google authenticator application.</p>
+<p>Now that I've "proofed the concept" I will remove it again!</p>
+<p>And focus on getting this to run on an embedded device, for instance on an <a rel="noopener external" target="_blank" href="https://m5stack.com/">M5 Stack</a> which has an ESP32 controller and a screen. although this will probably mean I have to port the python library to C, as I haven't found any libraries that work with the AWS secret, just some abandoned projects that tried to do the same.
+But that's another story</p>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-nasm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-armasm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-asm6502.min.js"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>

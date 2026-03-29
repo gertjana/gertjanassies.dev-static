@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Building a USB Keep-Awake Device with MicroPython - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="A small excursion into the makerspace using MicroPython and the Adafruit Neo Trinkey to build a device that keeps your laptop awake - no more awkward screen timeouts during presentations!" />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="Building a USB Keep-Awake Device with MicroPython" />
+<meta property="og:description" content="A small excursion into the makerspace using MicroPython and the Adafruit Neo Trinkey to build a device that keeps your laptop awake - no more awkward screen timeouts during presentations!" />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;251202-trinkey-keep-alive&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;neo_trinkey.jpg" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2025-12-02T00:00:00Z" />
+
+
+<meta property="article:tag" content="micropython" />
+
+<meta property="article:tag" content="embedded" />
+
+<meta property="article:tag" content="hardware" />
+
+<meta property="article:tag" content="circuitpython" />
+
+<meta property="article:tag" content="makerspace" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="Building a USB Keep-Awake Device with MicroPython" />
+    <meta name="twitter:description" content="A small excursion into the makerspace using MicroPython and the Adafruit Neo Trinkey to build a device that keeps your laptop awake - no more awkward screen timeouts during presentations!" />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;neo_trinkey.jpg
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;251202-trinkey-keep-alive&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/post/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">Building a USB Keep-Awake Device with MicroPython</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2025-12-02</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+        <a href="/categories/make/" class="category">make</a>
+      
+      
+        
+          <a href="/tags/micropython/" class="tag">micropython</a>
+        
+      
+        
+          <a href="/tags/embedded/" class="tag">embedded</a>
+        
+      
+        
+          <a href="/tags/hardware/" class="tag">hardware</a>
+        
+      
+        
+          <a href="/tags/circuitpython/" class="tag">circuitpython</a>
+        
+      
+        
+          <a href="/tags/makerspace/" class="tag">makerspace</a>
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">A small excursion into the makerspace using MicroPython and the Adafruit Neo Trinkey to build a device that keeps your laptop awake - no more awkward screen timeouts during presentations!</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;neo_trinkey.jpg" alt="Building a USB Keep-Awake Device with MicroPython" />
+      
+
+      <div class="post-markdown-content">
+        <h2 id="introduction">Introduction</h2>
+<p>You know those viral videos about companies installing software to monitor if employees are actually working by tracking keyboard and mouse activity? Well, this post is certainly not about that, but about avoiding your laptop going to sleep during presentations, long-running tasks, or when you're just reading documentation on your screen.</p>
+<p>This is a story of building a pocket-sized USB device that prevents my laptop from sleeping, complete with pretty LED animations and using touch buttons to control it.
+The entire project only took a couple of hours, thanks to MicroPython and the <a rel="noopener external" target="_blank" href="https://www.adafruit.com/product/4870">Adafruit Neo Trinkey</a>.</p>
+<h2 id="hardware">Hardware</h2>
+<p><img src="/content-images/neo_trinkey.jpg" alt="Neo Trinkey Device" /></p>
+<p><strong>What is it?</strong></p>
+<ul>
+<li>A tiny SAMD21 microcontroller (the same chip family used in the original Arduino Zero)</li>
+<li>Four RGB NeoPixel LEDs built right into the board</li>
+<li>Two capacitive touch pads you can activate by simply touching them</li>
+<li>USB-A connector that plugs directly into your laptop</li>
+<li>Costs under €10</li>
+</ul>
+<p><strong>Why is it perfect for this project?</strong></p>
+<ol>
+<li><strong>Plug-and-play</strong>: No breadboards, no wires, no soldering required. It's literally just plug it in and go.</li>
+<li><strong>Visual feedback</strong>: The four NeoPixels give us beautiful RGB LED feedback so we always know what state our device is in.</li>
+<li><strong>Touch controls</strong>: Two touch-sensitive pads mean we can toggle features without any physical buttons.</li>
+<li><strong>Small form factor</strong>: It's so tiny you can leave it plugged in and forget about it.</li>
+<li><strong>MicroPython ready</strong>: Adafruit has excellent support for running CircuitPython (a variant of MicroPython) on all their boards.</li>
+</ol>
+<p>The beauty of this hardware choice is that you don't need any additional components. No resistors, no external LEDs, no complicated wiring diagrams. Everything you need is on this one tiny board. This makes it perfect for beginners or anyone who just wants to get a project done quickly without dealing with hardware complexity.</p>
+<h2 id="what-s-micropython">What's MicroPython?</h2>
+<p>Before we dive into the code, let's talk about why MicroPython is such a game-changer for hardware projects.</p>
+<p><strong>MicroPython</strong> is a lean and efficient implementation of Python 3 that's designed to run on microcontrollers. Think of it as taking the friendly, readable Python syntax you might know from web development or data science, and shrinking it down to fit on tiny hardware with limited memory and processing power.</p>
+<p><strong>Why MicroPython is perfect for makers:</strong></p>
+<ol>
+<li><strong>Instant gratification</strong>: No compile step. You write code, save it to the device, and it runs immediately.</li>
+<li><strong>Interactive REPL</strong>: You can connect via serial and type commands interactively, perfect for testing and debugging.</li>
+<li><strong>Rapid prototyping</strong>: Iterate quickly without the compile-upload-test cycle of traditional embedded development.</li>
+<li><strong>Great libraries</strong>: Access to hardware features through simple, well-documented libraries.</li>
+</ol>
+<p><strong>CircuitPython vs MicroPython:</strong></p>
+<p>For this project, I'm actually using <strong>CircuitPython</strong>, which is Adafruit's fork of MicroPython. CircuitPython is specifically optimized for Adafruit hardware and includes additional libraries for their products. The differences are minor, think of CircuitPython as "MicroPython with batteries included for Adafruit boards."</p>
+<h3 id="installation">Installation</h3>
+<p>Getting started with CircuitPython on the Neo Trinkey is surprisingly simple:</p>
+<p><strong>Step 1: Download CircuitPython</strong></p>
+<ul>
+<li>Visit <a rel="noopener external" target="_blank" href="https://circuitpython.org/">circuitpython.org</a></li>
+<li>Find the <a rel="noopener external" target="_blank" href="https://circuitpython.org/board/neo_trinkey_m0/">Neo Trinkey M0 page</a></li>
+<li>Download the latest <code>.UF2</code> file (around 150KB)</li>
+</ul>
+<p><strong>Step 2: Enter Bootloader Mode</strong></p>
+<ul>
+<li>Plug in your Neo Trinkey</li>
+<li>Look for the tiny reset button on the board</li>
+<li>Double-click it quickly (like double-clicking a mouse)</li>
+<li>The board will reboot and appear as a USB drive called <code>TRINKETBOOT</code></li>
+</ul>
+<p><strong>Step 3: Install CircuitPython</strong></p>
+<ul>
+<li>Drag and drop the <code>.UF2</code> file onto the <code>TRINKETBOOT</code> drive</li>
+<li>The device will automatically reboot</li>
+<li>It now appears as a drive called <code>CIRCUITPY</code></li>
+<li>That's it! CircuitPython is installed.</li>
+</ul>
+<p><strong>Step 4: Install Required Libraries</strong></p>
+<ul>
+<li>Download the <a rel="noopener external" target="_blank" href="https://circuitpython.org/libraries">Adafruit CircuitPython Library Bundle</a></li>
+<li>Extract the bundle and find the <code>adafruit_hid</code> folder</li>
+<li>Copy the entire <code>adafruit_hid</code> folder into the <code>lib/</code> directory on your <code>CIRCUITPY</code> drive</li>
+</ul>
+<p>Now you're ready to write code! The entire installation process takes about 5 minutes.</p>
+<p><strong>Development environment:</strong>
+You can use any text editor you like. I personally use VS Code with the CircuitPython extension, but even Notepad works fine. Just edit the <code>code.py</code> file on the <code>CIRCUITPY</code> drive, save it, and your changes run immediately.</p>
+<p>In the end the files on the USB stick should look like this</p>
+<pre><code>CIRCUITPY/
+├── code.py
+├── lib/
+│   └── adafruit_hid/
+└── boot_out.txt
+</code></pre>
+<h2 id="software-how-it-works">Software: How It Works</h2>
+<p>Now for the fun part—let's look at how the code works. The beauty of MicroPython is that the code is remarkably readable, even if you've never written embedded code before.</p>
+<h3 id="the-big-picture">The Big Picture</h3>
+<p>Our device has a simple state machine:</p>
+<ol>
+<li><strong>Idle</strong> (blue LEDs) - Device is plugged in but not keeping the laptop awake</li>
+<li><strong>Active</strong> (green LEDs) - Device is simulating user activity every 30 seconds</li>
+<li><strong>Quiet mode</strong> - All LED animations are disabled for stealth operation</li>
+</ol>
+<p>The user controls these states with two touch pads, and the device provides visual feedback through the NeoPixel LEDs.</p>
+<h3 id="initialization-and-setup">Initialization and Setup</h3>
+<pre><code data-lang="python">import board
+import touchio
+import neopixel
+import usb_hid
+import time
+from adafruit_hid.keyboard import Keyboard
+from adafruit_hid.keycode import Keycode
+from adafruit_hid.mouse import Mouse
+
+# Configuration
+ACTION_INTERVAL = 30  # Seconds between keep-awake actions
+ACTION_OFFSET = 5     # Seconds before first action
+STATUS_LED_TIMEOUT = 2  # How long to show status LEDs
+
+# Initialize hardware
+pixels = neopixel.NeoPixel(board.NEOPIXEL, 4, brightness=0.2)
+touch1 = touchio.TouchIn(board.TOUCH1)  # Left pad - toggle active
+touch2 = touchio.TouchIn(board.TOUCH2)  # Right pad - toggle quiet mode
+keyboard = Keyboard(usb_hid.devices)
+mouse = Mouse(usb_hid.devices)
+</code></pre>
+<p>This initialization is beautifully simple. We import the libraries we need and set up our hardware. The <code>board</code> module gives us access to the specific pins on our Neo Trinkey, while <code>neopixel</code>, <code>touchio</code>, and <code>usb_hid</code> let us control the LEDs, touch pads, and USB HID (Human Interface Device) functionality.</p>
+<h3 id="touch-detection">Touch Detection</h3>
+<pre><code data-lang="python">def check_touch_buttons():
+    &quot;&quot;&quot;Check if touch buttons are pressed and update state&quot;&quot;&quot;
+    global is_active, quiet_mode
+
+    # Touch 1: Toggle keep-awake on/off
+    if touch1.value:
+        is_active = not is_active
+        flash_color((255, 0, 255))  # Magenta flash for feedback
+        show_status_led()
+        time.sleep(0.3)  # Debounce delay
+
+    # Touch 2: Toggle quiet mode
+    if touch2.value:
+        quiet_mode = not quiet_mode
+        flash_color((255, 128, 0))  # Orange flash for feedback
+        time.sleep(0.3)  # Debounce delay
+</code></pre>
+<p>Capacitive touch detection is incredibly simple with CircuitPython. The <code>touch1.value</code> property returns <code>True</code> when you touch the pad. We add a small delay (<code>time.sleep(0.3)</code>) to debounce—preventing multiple triggers from a single touch.</p>
+<h3 id="keep-awake-actions">Keep-Awake Actions</h3>
+<p>Here's where the magic happens. We randomly choose one of three actions to simulate user activity:</p>
+<pre><code data-lang="python">import random
+
+def perform_keep_awake_action():
+    &quot;&quot;&quot;Randomly perform one of three keep-awake actions&quot;&quot;&quot;
+    action = random.randint(1, 3)
+
+    if action == 1:
+        # Press F15 key (rarely used, non-intrusive)
+        keyboard.send(Keycode.F15)
+    elif action == 2:
+        # Move mouse 1 pixel right and back
+        mouse.move(x=1)
+        time.sleep(0.1)
+        mouse.move(x=-1)
+    else:
+        # Move mouse 1 pixel down and back
+        mouse.move(y=1)
+        time.sleep(0.1)
+        mouse.move(y=-1)
+
+    # Show action animation (unless in quiet mode)
+    if not quiet_mode:
+        circular_animation((255, 255, 0))  # Yellow animation
+</code></pre>
+<p>Each action is subtle enough not to disrupt your work:</p>
+<ul>
+<li><strong>F15 key</strong>: Most operating systems don't have this key mapped to anything, so pressing it registers activity without side effects</li>
+<li><strong>Mouse movements</strong>: Tiny 1-pixel movements that you won't even notice</li>
+</ul>
+<h3 id="led-animations">LED Animations</h3>
+<p>One of the most satisfying parts of this project is the LED feedback:</p>
+<pre><code data-lang="python">def circular_animation(color):
+    &quot;&quot;&quot;Animate LEDs in a circular pattern&quot;&quot;&quot;
+    for i in range(4):
+        pixels.fill((0, 0, 0))  # Clear all
+        pixels[i] = color        # Light up one LED
+        pixels.show()
+        time.sleep(0.1)
+    pixels.fill((0, 0, 0))
+    pixels.show()
+
+def show_status_led():
+    &quot;&quot;&quot;Show current status with LED color&quot;&quot;&quot;
+    if is_active:
+        color = (0, 255, 0)  # Green for active
+    else:
+        color = (0, 0, 255)  # Blue for idle
+
+    pixels.fill(color)
+    pixels.show()
+    time.sleep(STATUS_LED_TIMEOUT)
+    pixels.fill((0, 0, 0))  # Turn off after timeout
+    pixels.show()
+</code></pre>
+<p>The circular animation gives visual confirmation that an action occurred, while the status LED provides quick feedback about the current state. Keeping the LEDs on for only 2 seconds prevents them from being distracting during use.</p>
+<h3 id="main-loop">Main Loop</h3>
+<pre><code data-lang="python">is_active = False
+quiet_mode = False
+last_action_time = time.monotonic()
+
+# Show initial status
+show_status_led()
+
+while True:
+    # Check for touch button input
+    check_touch_buttons()
+
+    # Perform keep-awake action if active
+    if is_active:
+        current_time = time.monotonic()
+        if current_time - last_action_time &gt;= ACTION_INTERVAL:
+            perform_keep_awake_action()
+            last_action_time = current_time
+
+    time.sleep(0.1)  # Small delay to prevent CPU spinning
+</code></pre>
+<p>The main loop is refreshingly simple:</p>
+<ol>
+<li>Check if the user touched either button</li>
+<li>If we're active and enough time has passed, perform a keep-awake action</li>
+<li>Sleep briefly to avoid maxing out the CPU</li>
+</ol>
+<p>The <code>time.monotonic()</code> function gives us a steady clock that doesn't jump around due to time adjustments, perfect for timing-based logic.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Building this keep-awake device was a perfect introduction to the makerspace world. In just a couple of hours, with about €10 worth of hardware and around 100 lines of Python code, I created something useful that hopefully sparks the imagination.</p>
+<p><strong>What makes this project special:</strong></p>
+<ul>
+<li><strong>No complicated hardware</strong>: Everything runs on a single, self-contained board</li>
+<li><strong>Beginner-friendly code</strong>: If you can write Python, you can write MicroPython</li>
+<li><strong>Immediate results</strong>: See your code changes take effect instantly</li>
+</ul>
+<p><strong>What you will learn:</strong></p>
+<ul>
+<li>How accessible hardware projects have become thanks to MicroPython</li>
+<li>The joy of having physical feedback (LEDs!) for your code</li>
+<li>How simple USB HID programming can be</li>
+<li>That you don't need to be an electrical engineer to build cool hardware projects</li>
+</ul>
+<h3 id="next-steps">Next Steps</h3>
+<p>If you want to extend this project, here are some ideas:</p>
+<ul>
+<li>Play around with the colors and timings</li>
+<li>Make an annoyance device with no LEDs flashing, but randomly moves the mouse every now and then</li>
+<li>Randomly let it type 'All your base are belong to us' every now and then</li>
+<li>as a (not very secure) authentication device: store and let it type out your password when pressing one of the touch buttons</li>
+</ul>
+<h3 id="references-and-resources">References and Resources</h3>
+<ul>
+<li><strong>Project Repository</strong>: <a rel="noopener external" target="_blank" href="https://github.com/gertjana/trinkey_keep_alive">github.com/gertjana/trinkey_keep_alive</a></li>
+<li><strong>Hardware</strong>: <a rel="noopener external" target="_blank" href="https://www.adafruit.com/product/4870">Adafruit Neo Trinkey</a></li>
+<li><strong>CircuitPython</strong>: <a rel="noopener external" target="_blank" href="https://circuitpython.org/">circuitpython.org</a></li>
+<li><strong>CircuitPython Libraries</strong>: <a rel="noopener external" target="_blank" href="https://circuitpython.org/libraries">CircuitPython Bundle</a></li>
+<li><strong>Adafruit Learning System</strong>: Tons of great tutorials at <a rel="noopener external" target="_blank" href="https://learn.adafruit.com/">learn.adafruit.com</a></li>
+</ul>
+<p><strong>A word of caution</strong>: While this device is great for legitimate uses like preventing screen timeout during presentations or while running long tasks, please be mindful of your workplace policies. This isn't a tool for circumventing employee monitoring systems—that would be both unethical and likely against your employment terms. Use it responsibly!</p>
+<p>Now go forth and explore the makerspace! MicroPython and Adafruit make hardware projects accessible to everyone, and the only limit is your imagination. Happy making!</p>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-nasm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-armasm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-asm6502.min.js"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>

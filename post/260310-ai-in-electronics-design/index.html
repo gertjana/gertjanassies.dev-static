@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Experimenting with AI in FPGA Development - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="implementing an SPI controller in an FPGA and testing if it works with a logic analyzer before adding an actual Device" />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="Experimenting with AI in FPGA Development" />
+<meta property="og:description" content="implementing an SPI controller in an FPGA and testing if it works with a logic analyzer before adding an actual Device" />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260310-ai-in-electronics-design&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;debugging_max1000.png" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2026-03-10T00:00:00Z" />
+
+
+<meta property="article:tag" content="fpga" />
+
+<meta property="article:tag" content="llm" />
+
+<meta property="article:tag" content="development" />
+
+<meta property="article:tag" content="featured" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="Experimenting with AI in FPGA Development" />
+    <meta name="twitter:description" content="implementing an SPI controller in an FPGA and testing if it works with a logic analyzer before adding an actual Device" />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;debugging_max1000.png
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260310-ai-in-electronics-design&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/post/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">Experimenting with AI in FPGA Development</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2026-03-10</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+        <span class="featured-badge">Featured</span>
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+      
+        
+          <a href="/tags/fpga/" class="tag">fpga</a>
+        
+      
+        
+          <a href="/tags/llm/" class="tag">llm</a>
+        
+      
+        
+          <a href="/tags/development/" class="tag">development</a>
+        
+      
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">implementing an SPI controller in an FPGA and testing if it works with a logic analyzer before adding an actual Device</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;debugging_max1000.png" alt="Experimenting with AI in FPGA Development" />
+      
+
+      <div class="post-markdown-content">
+        <h2 id="the-premise">The Premise</h2>
+<p>As an exercise to see how 'good' LLM's are getting I've asked it to build a small CPU (The likes of the Z80 or 6502) in an FPGA I had in a drawer, that project can be found <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga">here</a> if you're interested</p>
+<p>That is all working nice and dandy, giving me a chance to write some small assembly programs for it, bringing back fond memories from my youth.</p>
+<h2 id="improving-the-situation">Improving the situation</h2>
+<p>But where it comes to visualisation, the <a rel="noopener external" target="_blank" href="https://www.trenz-electronic.de/en/MAX1000-IoT-Maker-Board-16kLE-32-MByte-RAM-8-MByte-Flash-6.15-x-2.5-cm/TEI0001-04-FBC84A">MAX1000 FPGA board</a> has 8 leds in a row where i use the <code>OUT Ra, 2</code> instruction to show the contents of one of the 8bit registers.</p>
+<p>For instance here it is running a program, that uses the SHL (Shift left) and SHR (Shift right) instructions to simulate the light pattern on the KITT car from the Knightrider television series</p>
+<img alt="MAX1000" src="/content-images/max_1000_knightrider.gif" class="float-right" />
+<pre><code data-lang="nasm">
+        LDI  R1, 0x80       ; R1 = 0x20  - leftmost edge
+        LDI  R2, 1          ; R2 = 0x01  — rightmost edge
+        MOV  R7, R1         ; R7 = 0x80 (LED[0] on), start scanning right
+        OUT  R7, 2          ; display initial pattern
+
+scan_right:
+        CMP  R7, R2         ; R7 == 0x01 (rightmost edge)?
+        JZ   scan_left      ; yes → reverse, scan left
+        SHR  R7, R7         ; no  → step right
+        OUT  R7, 2          ; display updated pattern
+        JMP  scan_right
+
+scan_left:
+        CMP  R1, R7         ; R7 == 0x80 (leftmost edge)?
+        JZ   scan_right     ; yes → reverse, scan right
+        SHL  R7, R7         ; no  → step left
+        OUT  R7, 2          ; display updated pattern
+        JMP  scan_left
+</code></pre>
+<h2 id="moar-visuals">Moar visuals</h2>
+<p>So lets add a small OLED Screen, the board has an 12 pin connector to interface with the outside world in a standardized manner, and you can buy amongst other things a 128x32 OLED Display based on the SSD1306 chip which has an SPI Interface to be able to control it.</p>
+<p>Now while the display is on order. I started the SPI Implementation. (It's a bit different from working with Arduino's as they have loads of libraries available)</p>
+<p>SPI requires at least 4 wires</p>
+<ul>
+<li>Enable (or Clock Select) low is telling the device on the other end. I'm going to send you some data now</li>
+<li>D/C (Data/Command) High meaning i'm sending data (text or pixels), Low meaning I'm sending you commands f.i. clear screen, set cursor</li>
+<li>MOSI (Master out, Slave in) the actual data</li>
+<li>Clock (Pulses for each data bit that is send out)</li>
+</ul>
+<p>So Opencode with Claude Sonnet 4.6 in plan mode, I started warming it up to the SPI implementation. giving it links the the SPI protocol itself and the datasheet for the SSD1306 Display model and then asked it to implement a monitor that would show the content of the registers and flags, and the name of the program it is running.</p>
+<p>The resulting code is here <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga/blob/pmod_spi/rtl/oled_monitor.v">rtl/oled_monitor.v</a></p>
+<p>So far so good It created the implementation and tests for the testbench simulator but I wanted to be more sure that it would work. the LLM had similar ideas, as it was asking about what should we do next? One of it's suggestions was to hook up an logic analyzer so I could judge whether or not it was correctly implemented.</p>
+<p>So I hooked up a <a rel="noopener external" target="_blank" href="https://www.saleae.com/logic">logic analyzer</a>, set the protocol to SPI, so it recognizes the bytes of data, and let it run for a bit, the result is shown below</p>
+<p><img src="/content-images/logic_analyzer.png" alt="logic analyzer screenshot" /></p>
+<h2 id="feedback-loop">Feedback loop</h2>
+<p>Now the idea I had then is to feed that image back into opencode and ask it to use the logic analyzer screenshot to verify the implementation itself.</p>
+<p>It did so, relating the code and timings to the SPI output and even found a couple of bugs:</p>
+<pre><code data-lang="text">In summary:
+
+1	DC possibly one byte late for first font byte per line (visible in screenshot as 0x7F sent with DC=0)
+  High — display shows garbage on first column of each line&#39;s first char after page-set
+2	Display On (0xAF) sent before VBAT+100ms delay, violating power-on sequence
+  High — could damage display or fail to initialize
+3	Reset applied before VDD is on
+  Medium — deviates from Digilent spec
+4	ST_DISP_ON state is dead code
+  Low — code smell
+5	SPI engine and FSM both modify spi_cs_n in same cycle when spi_done
+  Medium — works in simulation but fragile in synthesis
+
+The most directly confirmed bug from the screenshot is Bug 1 (DC=0 for the first font data byte after page commands), and Bug 2 (Display On sequencing). Would you like me to fix any of these?
+</code></pre>
+<p>Asking it to fix it and repeating the exercise, I got a thumbs up. making the risk of this not working as low as possible, but still there, so there's still the possibility I have to dive into the datasheet. to look at probably timing issues. but fingers crossed.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>This way of working proofs that LLM's can make you pretty productive, but you need to make sure it has the right context and good feedback on what it has done.</p>
+<p>I also gave Claude the capture file with all the measurements, but that turned out to be too much for it. it went under and never surfaced again.</p>
+<p>What could we have done better? well, what we want to display, the fonts and the actual SPI protocol is all in one file. In a normal application that would be split up in the SPI implementation module with a clear interface. to be called from the application. but for a Proof of Concept this is fine.</p>
+<p>Can't wait for the display to arrive</p>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-nasm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-armasm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-asm6502.min.js"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>
