@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>An Optional type in Go - an experiment - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="This blog post is an thought experiment in how a functional programming concept could be implemented in the Go language." />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="An Optional type in Go - an experiment" />
+<meta property="og:description" content="This blog post is an thought experiment in how a functional programming concept could be implemented in the Go language." />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;220528_optional_go&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;optional_go_top.jpg" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2022-05-28T00:00:00Z" />
+
+
+<meta property="article:tag" content="go" />
+
+<meta property="article:tag" content="functional" />
+
+<meta property="article:tag" content="option" />
+
+<meta property="article:tag" content="experiment" />
+
+<meta property="article:tag" content="featured" />
+
+
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="An Optional type in Go - an experiment" />
+    <meta name="twitter:description" content="This blog post is an thought experiment in how a functional programming concept could be implemented in the Go language." />
+    <meta name="twitter:image" content="
+https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;optional_go_top.jpg
+" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;220528_optional_go&#x2F;" />
+
+    
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h2>gertjanassies.dev</h2><br/>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/post/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">An Optional type in Go - an experiment</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date">2022-05-28</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+        <span class="featured-badge">Featured</span>
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+      
+        
+          <a href="/tags/go/" class="tag">go</a>
+        
+      
+        
+          <a href="/tags/functional/" class="tag">functional</a>
+        
+      
+        
+          <a href="/tags/option/" class="tag">option</a>
+        
+      
+        
+          <a href="/tags/experiment/" class="tag">experiment</a>
+        
+      
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">This blog post is an thought experiment in how a functional programming concept could be implemented in the Go language.</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;optional_go_top.jpg" alt="An Optional type in Go - an experiment" />
+      
+
+      <div class="post-markdown-content">
+        <p>A common pattern in Go is to have your function return an error next to the result to signify a failure inside the function like so:</p>
+<pre><code data-lang="go">func Divide(a float64, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New(&quot;Divide by zero, really?&quot;)
+    }
+    return a/b
+}
+</code></pre>
+<p>What if we could capture this in a Type with a couple of methods like so:</p>
+<pre><code data-lang="go">package optional
+
+Type Maybe[T] struct {
+    Value T
+    Error error
+}
+
+type Optional interface {
+    New()       // Constructor
+    Failed()    // true if Error
+}
+</code></pre>
+<p>Then our Divide function can become:</p>
+<pre><code data-lang="go">func Divide(a float64, b float64) Maybe[float64] {
+    if b == 0 {
+        return optional.New(Value: 0, Error: errors.New(&quot;Divide by zero, really?&quot;))
+    }
+}
+
+maybeDivived := Divide(2,4)
+if maybeDivided.Failed() {
+    fmt.Printf(&quot;Divide failed with %v&quot;, maybeDivided.Error)
+}
+</code></pre>
+<p>Now this is even more verbose then the original example, that's not improving on the situation. So lets try to implement a Map, where we can apply a function on the Value inside the Maybe and return a Maybe with the result of the function.</p>
+<pre><code data-lang="go">func Map[S any, T any](m Maybe[S], f func(S) (T, error)) Maybe[T] {
+    if m.Error != nil {
+        var unit T
+        return New(unit, m.Error)
+    } else {
+        r, err := f(m.Value)
+        return New(R, err)
+    }
+}
+</code></pre>
+<p>So here we take a:</p>
+<ul>
+<li>Maybe[S] and unwrap the S</li>
+<li>apply a function from S -&gt; T on the inside Value</li>
+<li>wrap again and return the Maybe[T]</li>
+</ul>
+<p>When there's an Error in the Maybe[S], I return a Maybe[T] with an uninitialized var of type T (which is kinda the Nothing type in Go, if you don't look too closely) and the error, if not I'm executing the function and returning the result with any error that might have happened in that function</p>
+<p>So now running:</p>
+<pre><code data-lang="go">maybe := New(&quot;2022-05-27T12:24:00Z&quot;, nil)
+f := func(date string) (time.Time, error) {
+    return time.Parse(time.RFC3339, date)
+} // returns a func(string) (time.Time, error)
+result := Map(maybe,f) // returns a Maybe[time.Time]
+</code></pre>
+<p>Will parse the string as a time.Time and handle the error when the string cannot be parsed, OK this is becoming a little more useful.</p>
+<p>But what if I want to chain a bunch of functions together that all could potentially give an error. Let's implement a let's call it `AndThen` function</p>
+<pre><code data-lang="go">func (m Maybe[T]) AndThen(f func (T) (T, error)) Maybe[T] {
+    return Map(m, f)
+}
+</code></pre>
+<p>As you can see AndThen is just a Map function. but now it applies to the struct</p>
+<pre><code data-lang="go">addOne := func (x int) (int, error) { return x+1, nil }
+multThree := func (x int) (int, error) { return x*3, nil }
+
+maybe := New(42, nil)
+
+res := maybe.
+        andThen(addOne).
+        andThen(multThree).
+        Value
+// 129
+
+</code></pre>
+<p>Unfortunately I couldn't get the AndThen to work with different input and result types. maybe someone more familiar with Go Generics can explain to me how that is done, if at all possible.</p>
+<p>Here I come to the conclusion that the chainable AndThen functionality is actually useful. especially when it's possible to use different types for in- and output.</p>
+<p>But I'm also coming to the conclusion, that implementing a pure functional library in Go is maybe not a good idea, as the language is not really suited for that. and that's fine. go learn yourself a bit of Haskell if you want that.
+The number of abandoned 'experiments' I found on public repo's also attested to this</p>
+<p>All the code used is in this repo: <a rel="noopener external" target="_blank" href="https://gitlab.com/gertjana/optional-go/-/blob/main/cmd/optional/optional.go">https://gitlab.com/gertjana/optional-go/-/blob/main/cmd/optional/optional.go</a></p>
+<p>Hope you learnt something, I did</p>
+<p>UPDATE:</p>
+<p>It is indeed not possible to have the AndThen method on the Maybe with a function with different types, as all the types you use need to be defined on the Maybe.</p>
+<p>Maybe there is a way to mimic union types with interfaces and get it working like that, but that's something for a new experiment.</p>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
+      </div>
+    </footer>
+    <script>
+      
+      document.querySelectorAll('code[data-lang]').forEach(function(el) {
+        var lang = el.getAttribute('data-lang');
+        if (lang === 'sh') lang = 'bash';
+        if (lang === 'docker') lang = 'docker';
+        el.classList.add('language-' + lang);
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" crossorigin="anonymous"></script>
+    <script src="/js/copy-code.js"></script>
+  </body>
+</html>

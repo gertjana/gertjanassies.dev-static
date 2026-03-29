@@ -106,7 +106,7 @@
             <div class="post-content">
               <div class="post-header">
                 <h2 class="post-title">
-                  <a href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;231010-redis-migration&#x2F;">Redis Migration</a>
+                  <a href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;231010_redis_migration&#x2F;">Redis Migration</a>
                 </h2>
                 <div class="post-taxonomy">
                   
@@ -146,10 +146,17 @@
         This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies
       </div>
     </footer>
-    <script src="/js/prism.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-nasm.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-armasm.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-asm6502.min.js"></script>
+    <script>
+      
+      document.querySelectorAll('code[data-lang]').forEach(function(el) {
+        var lang = el.getAttribute('data-lang');
+        if (lang === 'sh') lang = 'bash';
+        if (lang === 'docker') lang = 'docker';
+        el.classList.add('language-' + lang);
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" crossorigin="anonymous"></script>
     <script src="/js/copy-code.js"></script>
   </body>
 </html>
