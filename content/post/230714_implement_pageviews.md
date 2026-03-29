@@ -1,5 +1,5 @@
 +++
-slug = "230714_implement_pageviews"
+path = "post/230714_implement_pageviews"
 title = 'Implement page stats'
 date = '2023-07-14'
 description = 'Implementing Page stats starting with a PageView counter using Sveltekit and a Redis backend.'

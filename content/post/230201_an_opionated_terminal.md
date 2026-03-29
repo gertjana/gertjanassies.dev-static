@@ -1,5 +1,5 @@
 +++
-slug = "230201_an_opionated_terminal"
+path = "post/230201_an_opionated_terminal"
 title = 'An opinionated terminal experience'
 date = '2023-02-01'
 description = "As a Site Reliability / Software Engineer I'm a bit opinionated when it comes to the tool I use most of the time: The command line."

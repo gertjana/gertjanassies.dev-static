@@ -1,5 +1,5 @@
 +++
-slug = "220801_online_meetings2"
+path = "post/220801_online_meetings2"
 title = 'All those online meetings - part 2'
 date = '2022-08-01'
 description = 'Some improvements to the original design'

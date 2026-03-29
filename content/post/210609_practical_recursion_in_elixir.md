@@ -1,5 +1,5 @@
 +++
-slug = "210609_practical_recursion_in_elixir"
+path = "post/210609_practical_recursion_in_elixir"
 title = 'Practical recursion in Elixir'
 date = '2021-06-09'
 description = 'Explaining recursion with a very practical use case'

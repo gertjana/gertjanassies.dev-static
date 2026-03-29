@@ -1,5 +1,5 @@
 +++
-slug = "251202_trinkey_keep_alive"
+path = "post/251202_trinkey_keep_alive"
 title = 'Building a USB Keep-Awake Device with MicroPython'
 date = '2025-12-02'
 description = 'A small excursion into the makerspace using MicroPython and the Adafruit Neo Trinkey to build a device that keeps your laptop awake - no more awkward screen timeouts during presentations!'

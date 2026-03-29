@@ -1,5 +1,5 @@
 +++
-slug = "221102_eks_fine_grained_access"
+path = "post/221102_eks_fine_grained_access"
 title = 'How to use AWS services from EKS with fine-grained access control'
 date = '2022-11-02'
 description = 'bind service accounts to IAM roles to allow fine grained access control from k8s resources.'

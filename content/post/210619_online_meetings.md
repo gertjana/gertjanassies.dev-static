@@ -1,5 +1,5 @@
 +++
-slug = "210619_online_meetings"
+path = "post/210619_online_meetings"
 title = 'All those online meetings - part 1'
 date = '2021-06-19'
 description = 'While on a not particularly interesting online meeting, my eye fell on the [Raspberry Pico](https://www.raspberrypi.org/products/raspberry-pi-pico/) that I ordered and had just arrived that morning.'

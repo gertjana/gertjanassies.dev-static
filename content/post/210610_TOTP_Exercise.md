@@ -1,5 +1,5 @@
 +++
-slug = "210610_TOTP_Exercise"
+path = "post/210610_TOTP_Exercise"
 title = 'TOTP Exercise'
 date = '2021-06-10'
 description = 'As an exercise, I wanted to see if I could get TOTP codes used for multi factor authentication visible without having to resort to the Google Authenticator app.'

@@ -1,5 +1,5 @@
 +++
-slug = "211029_too_many_authenticating_failures"
+path = "post/211029_too_many_authenticating_failures"
 title = 'SSH - too many authentication failures'
 date = '2021-10-29'
 description = 'One morning I tried to login into a remote system using ssh and suddenly I got the above error.'
