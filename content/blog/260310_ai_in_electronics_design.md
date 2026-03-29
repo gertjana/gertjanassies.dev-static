@@ -18,14 +18,14 @@ That is all working nice and dandy, giving me a chance to write some small assem
 
 ## Improving the situation
 
-But where it comes to visualisation, the [MAX1000 FPGA board](https://www.trenz-electronic.de/en/MAX1000-IoT-Maker-Board-16kLE-32-MByte-RAM-8-MByte-Flash-6.15-x-2.5-cm/TEI0001-04-FBC84A) has 8 leds in a row, which I use to show the Program counter and the Carry and Overflow flags and with a push of a button the contents of one of the 8bit registers.
+But where it comes to visualisation, the [MAX1000 FPGA board](https://www.trenz-electronic.de/en/MAX1000-IoT-Maker-Board-16kLE-32-MByte-RAM-8-MByte-Flash-6.15-x-2.5-cm/TEI0001-04-FBC84A) has 8 leds in a row where i use the `OUT Ra, 2` instruction to show the contents of one of the 8bit registers.
 
 For instance here it is running a program, that uses the SHL (Shift left) and SHR (Shift right) instructions to simulate the light pattern on the KITT car from the Knightrider television series
 
 <img alt="MAX1000" src="/content-images/max_1000_knightrider.gif" class="float-right" />
 
-```assembler
-        LDI  R1, 0x20       ; R1 = 0x20
+```asm6502
+        LDI  R1, 0x80       ; R1 = 0x20  - leftmost edge
         LDI  R2, 1          ; R2 = 0x01  — rightmost edge
         MOV  R7, R1         ; R7 = 0x80 (LED[0] on), start scanning right
         OUT  R7, 2          ; display initial pattern
