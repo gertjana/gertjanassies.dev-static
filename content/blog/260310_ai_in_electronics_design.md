@@ -22,7 +22,28 @@ But where it comes to visualisation, the [MAX1000 FPGA board](https://www.trenz-
 
 For instance here it is running a program, that uses the SHL (Shift left) and SHR (Shift right) instructions to simulate the light pattern on the KITT car from the Knightrider television series
 
-![Program](/content-images/knightrider_program.png) ![MAX1000](/content-images/max_1000_knightrider.gif)
+<img alt="MAX1000" src="/content-images/max_1000_knightrider.gif" class="float-right" />
+
+```assembler
+        LDI  R1, 0x20       ; R1 = 0x20
+        LDI  R2, 1          ; R2 = 0x01  — rightmost edge
+        MOV  R7, R1         ; R7 = 0x80 (LED[0] on), start scanning right
+        OUT  R7, 2          ; display initial pattern
+
+scan_right:
+        CMP  R7, R2         ; R7 == 0x01 (rightmost edge)?
+        JZ   scan_left      ; yes → reverse, scan left
+        SHR  R7, R7         ; no  → step right
+        OUT  R7, 2          ; display updated pattern
+        JMP  scan_right
+
+scan_left:
+        CMP  R1, R7         ; R7 == 0x80 (leftmost edge)?
+        JZ   scan_right     ; yes → reverse, scan right
+        SHL  R7, R7         ; no  → step left
+        OUT  R7, 2          ; display updated pattern
+        JMP  scan_left
+```
 
 ## Moar visuals
 
