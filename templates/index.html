@@ -7,7 +7,7 @@
 
     <div class="posts-container">
       <div class="posts-list">
-        {% set all_posts = get_section(path="blog/_index.md") %}
+        {% set all_posts = get_section(path="post/_index.md") %}
         {% for post in all_posts.pages %}
           {% if post.extra.image is defined and post.extra.image %}
             {% set has_image = true %}

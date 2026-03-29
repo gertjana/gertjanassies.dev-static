@@ -65,7 +65,7 @@ This approach demonstrated here (with the help of the good people at Adafruit) l
 The Raspberry Pi Foundation clearly has a winner here, a very cheap versatile microcontroller with the power of the dual-core Arm M0 and good support from a lot of manufacturers like Adafruit and others making it an in my eyes one of the best options out there for small DIY projects and education purposes.
 I can't wait to have my niece and nephew solder one together for their online school lessons, as I have still 2 of the 3 boards left.
 
-Continued in Part 2: [All those online meetings - part 2](/blog/220801_online_meetings2)
+Continued in Part 2: [All those online meetings - part 2](/post/220801-online-meetings2)
 
 ## References
 

@@ -10,7 +10,7 @@ author = 'Gertjan Assies'
 image = '/content-images/implementing_pageviews.jpg'
 +++
 
-In a previous [blog](/blog/230627_new_blog) I talked about a blog I created with [Sveltekit](https://kit.svelte.dev)
+In a previous [blog](/post/230627-new-blog) I talked about a blog I created with [Sveltekit](https://kit.svelte.dev)
 and after I added some SEO related metadata. I wanted to see if it's actually being found and read.
 
 I could of course just add google analytics or something similar, but I'm learning about Svelte and Typescript. so lets if we can implement a simple pageview counter, storing it in redis.

@@ -13,7 +13,7 @@ image = '/content-images/online_meetings2_top.png'
 A while ago I blogged about a small project with a Raspberry Pi Pico and a couple of buttons to make a tool that could help me in all those online meetings when we all had to work from home during Covid.
 
 I'm just explaining the changes here, so If you want to get the full picture, please read the first part of the article:
-[All those online meetings - part 1](/blog/210619_online_meetings)
+[All those online meetings - part 1](/post/210619-online-meetings)
 
 Now it works pretty well but there were some improvements to be made
 
@@ -90,4 +90,4 @@ Thanks for reading. and hopefully, I inspired you to start doing your own little
 next steps: Create a 3D printed case for it…. _is firing up Fusion360_
 
 Continueing in Part 3:
-[All those online meetings - Part 3](/blog/220918_online_meetings3)
+[All those online meetings - Part 3](/post/220918-online-meetings3)
