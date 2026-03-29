@@ -151,7 +151,8 @@ https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;debugging_max1000.p
 <p>But where it comes to visualisation, the <a rel="noopener external" target="_blank" href="https://www.trenz-electronic.de/en/MAX1000-IoT-Maker-Board-16kLE-32-MByte-RAM-8-MByte-Flash-6.15-x-2.5-cm/TEI0001-04-FBC84A">MAX1000 FPGA board</a> has 8 leds in a row where i use the <code>OUT Ra, 2</code> instruction to show the contents of one of the 8bit registers.</p>
 <p>For instance here it is running a program, that uses the SHL (Shift left) and SHR (Shift right) instructions to simulate the light pattern on the KITT car from the Knightrider television series</p>
 <img alt="MAX1000" src="/content-images/max_1000_knightrider.gif" class="float-right" />
-<pre><code data-lang="asm6502">        LDI  R1, 0x80       ; R1 = 0x20  - leftmost edge
+<pre><code data-lang="nasm">
+        LDI  R1, 0x80       ; R1 = 0x20  - leftmost edge
         LDI  R2, 1          ; R2 = 0x01  — rightmost edge
         MOV  R7, R1         ; R7 = 0x80 (LED[0] on), start scanning right
         OUT  R7, 2          ; display initial pattern
