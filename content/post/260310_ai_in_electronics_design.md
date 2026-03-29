@@ -1,4 +1,5 @@
 +++
+slug = "260310_ai_in_electronics_design"
 title = 'Experimenting with AI in FPGA Development'
 date = '2026-03-10'
 description = 'implementing an SPI controller in an FPGA and testing if it works with a logic analyzer before adding an actual Device'

@@ -1,4 +1,5 @@
 +++
+slug = "230627_new_blog"
 title = 'Made a new Blog'
 date = '2023-06-27'
 description = 'Learning about Svelte by making a blog'

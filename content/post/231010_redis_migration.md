@@ -1,4 +1,5 @@
 +++
+slug = "231010_redis_migration"
 title = 'Redis Migration'
 date = '2023-10-10'
 description = 'Migrating from redis to dragonflydb for this blog.'

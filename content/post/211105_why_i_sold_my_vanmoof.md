@@ -1,4 +1,5 @@
 +++
+slug = "211105_why_i_sold_my_vanmoof"
 title = 'why I sold my van Moof bike'
 date = '2021-11-05'
 description = "When brands grow fast, it's the quality that suffers, and that will cost you the customers that helped you grow in the first place."

@@ -1,4 +1,5 @@
 +++
+slug = "220918_online_meetings3"
 title = 'All those online meetings - Part 3'
 date = '2022-09-18'
 description = 'In the previous two blogs, I explained the idea and execution of a small device that would allow me to mute/unmute audio/video and raise a hand in video calls with hangouts, zoom or teams.'

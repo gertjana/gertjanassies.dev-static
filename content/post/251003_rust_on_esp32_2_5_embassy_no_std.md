@@ -1,4 +1,5 @@
 +++
+slug = "251003_rust_on_esp32_2_5_embassy_no_std"
 title = 'Rust on ESP32 part 2.5 - Switching software to Rust no_std and Embassy'
 date = '2025-10-03'
 description = 'Rewriting the source code to better fit the ESP32 using no_std Rust and Embassy framework'

@@ -1,4 +1,5 @@
 +++
+slug = "220528_optional_go"
 title = 'An Optional type in Go - an experiment'
 date = '2022-05-28'
 description = 'This blog post is an thought experiment in how a functional programming concept could be implemented in the Go language.'

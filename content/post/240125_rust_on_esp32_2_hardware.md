@@ -1,4 +1,5 @@
 +++
+slug = "240125_rust_on_esp32_2_hardware"
 title = 'Rust on ESP32 part 2 - The hardware'
 date = '2024-01-25'
 description = 'Focusing on the minimal hardware needed to build an EV Charger with Rust on a ESP32'

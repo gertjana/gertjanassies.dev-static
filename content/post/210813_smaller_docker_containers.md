@@ -1,4 +1,5 @@
 +++
+slug = "210813_smaller_docker_containers"
 title = 'Smaller docker containers'
 date = '2022-08-13'
 description = 'How to create your docker containers as small as possible'

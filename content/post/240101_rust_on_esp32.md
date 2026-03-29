@@ -1,4 +1,5 @@
 +++
+slug = "240101_rust_on_esp32"
 title = 'Rust on ESP32'
 date = '2024-01-04'
 description = 'Creating applications for ESP32 microcontrollers with the power of the Rust programming language.'

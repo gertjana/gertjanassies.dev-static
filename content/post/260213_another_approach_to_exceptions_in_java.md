@@ -1,4 +1,5 @@
 +++
+slug = "260213_another_approach_to_exceptions_in_java"
 title = 'Another approach to checked exceptions with the Result type'
 date = '2026-02-13'
 description = 'Replacing checked exceptions with a Result type for cleaner, more composable error handling in Java'
