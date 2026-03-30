@@ -150,7 +150,7 @@ https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;result_type_top.jpg
 <p>Java's checked exceptions often lead to verbose code, awkward abstractions, and layers of try-catch blocks that obscure business logic. What if there was a better way?</p>
 <p>Enter the <strong>Result type</strong> a functional programming pattern that represents operations that can succeed or fail, without resorting to exceptions for control flow.</p>
 <p>The application I chose to experiment with this, is a commandline application that manages filament (the rolls of plastic wire used in 3D-printing). so all the examples are from that sourcecode.</p>
-<h2 id="the-problem-with-checked-exceptions">The Problem with Checked Exceptions</h2>
+<h2 id="the-problem-with-checked-exceptions"><a class="zola-anchor" href="#the-problem-with-checked-exceptions" aria-label="Anchor link for: the-problem-with-checked-exceptions">The Problem with Checked Exceptions</a></h2>
 <p>Consider a typical repository method that reads from a file:</p>
 <pre><code data-lang="java">public List&lt;Filament&gt; loadFilaments() throws IOException {
     return objectMapper.readValue(
@@ -178,7 +178,7 @@ public String listAll() throws IOException {
     return Collections.emptyList(); // Silent failure!
 }
 </code></pre>
-<h2 id="the-result-type-solution">The Result Type Solution</h2>
+<h2 id="the-result-type-solution"><a class="zola-anchor" href="#the-result-type-solution" aria-label="Anchor link for: the-result-type-solution">The Result Type Solution</a></h2>
 <p>The <code>Result&lt;T, E&gt;</code> type explicitly represents success or failure as a value, not an exception. Here's the interface:</p>
 <pre><code data-lang="java">public sealed interface Result&lt;T, E&gt;
     permits Result.Success, Result.Failure {
@@ -188,7 +188,7 @@ public String listAll() throws IOException {
 }
 </code></pre>
 <p>Using Java's sealed interfaces and records (introduced in Java 17), we get exhaustive pattern matching and immutability for free.</p>
-<h2 id="wrapping-with-result-of">Wrapping with Result.of()</h2>
+<h2 id="wrapping-with-result-of"><a class="zola-anchor" href="#wrapping-with-result-of" aria-label="Anchor link for: wrapping-with-result-of">Wrapping with Result.of()</a></h2>
 <p>The key to adoption is making it <strong>easy to wrap</strong> potentially failing operations. The <code>Result.of()</code> method handles this beautifully:</p>
 <pre><code data-lang="java">@FunctionalInterface
 interface ThrowingSupplier&lt;T&gt; {
@@ -229,7 +229,7 @@ public Result&lt;List&lt;Filament&gt;, String&gt; loadAll() {
 <li>Map exceptions to user-friendly error messages using the error mapper function</li>
 <li>In this case the Error type is a String, but we could just as easily pass on the Exception type itself.</li>
 </ol>
-<h2 id="unwrapping-with-result-fold">Unwrapping with result.fold()</h2>
+<h2 id="unwrapping-with-result-fold"><a class="zola-anchor" href="#unwrapping-with-result-fold" aria-label="Anchor link for: unwrapping-with-result-fold">Unwrapping with result.fold()</a></h2>
 <p>The <code>fold()</code> method is where the magic happens. It forces you to handle both cases — success and failure — and produce a single unified result:</p>
 <pre><code data-lang="java">default &lt;R&gt; R fold(
     Function&lt;E, R&gt; onFailure,
@@ -253,7 +253,7 @@ public String listAll(
 }
 </code></pre>
 <p>No try-catch blocks. No exception propagation. Just two functions: one for the error path, one for the success path. The compiler ensures you handle both.</p>
-<h2 id="composition-and-transformation">Composition and Transformation</h2>
+<h2 id="composition-and-transformation"><a class="zola-anchor" href="#composition-and-transformation" aria-label="Anchor link for: composition-and-transformation">Composition and Transformation</a></h2>
 <p>The real power emerges when composing multiple operations. The Result type provides <code>map()</code>, <code>flatMap()</code>, and <code>mapError()</code> for elegant transformations:</p>
 <pre><code data-lang="java">// Transform successful values
 result.map(filaments -&gt; filaments.size());
@@ -281,7 +281,7 @@ result.mapError(msg -&gt;
 }
 </code></pre>
 <p>If either the filament or filament type lookup fails, the error propagates automatically. If both succeed, the calculation runs. All without a single try-catch block.</p>
-<h2 id="benefits-in-practice">Benefits in Practice</h2>
+<h2 id="benefits-in-practice"><a class="zola-anchor" href="#benefits-in-practice" aria-label="Anchor link for: benefits-in-practice">Benefits in Practice</a></h2>
 <p>After refactoring to the Result type, I've noticed:</p>
 <p><strong>Cleaner signatures</strong>: Methods declare exactly what can go wrong without forcing exception handling.</p>
 <pre><code data-lang="java">// Before
@@ -293,7 +293,7 @@ Result&lt;List&lt;Filament&gt;, String&gt; getAllFilaments()
 <p><strong>Explicit error handling</strong>: Every <code>.fold()</code> is a visible decision point where errors are handled.</p>
 <p><strong>Better error messages</strong>: Error mapper functions let you provide context-specific messages at the failure point, not generic catch-all handlers.</p>
 <p><strong>Composability</strong>: Chaining operations with <code>flatMap()</code> creates pipelines that fail fast and propagate errors naturally.</p>
-<h2 id="when-to-use-it">When to Use It</h2>
+<h2 id="when-to-use-it"><a class="zola-anchor" href="#when-to-use-it" aria-label="Anchor link for: when-to-use-it">When to Use It</a></h2>
 <p>The Result type shines for:</p>
 <ul>
 <li><strong>Repository/data access layers</strong>: File I/O, database queries, external API calls</li>
@@ -306,7 +306,7 @@ Result&lt;List&lt;Filament&gt;, String&gt; getAllFilaments()
 <li><strong>Fatal errors</strong>: Out of memory, stack overflow</li>
 <li><strong>Third-party code</strong>: When you don't control the interface</li>
 </ul>
-<h2 id="conclusion">Conclusion</h2>
+<h2 id="conclusion"><a class="zola-anchor" href="#conclusion" aria-label="Anchor link for: conclusion">Conclusion</a></h2>
 <p>The Result type transforms error handling from an afterthought into a first-class concern. By wrapping potentially failing operations with <code>Result.of()</code> in lower tiers and unwrapping with <code>result.fold()</code> at boundaries, you create code that's more explicit, composable, and maintainable.</p>
 <p>Checked exceptions tried to force explicit error handling but ended up creating layers of ceremony. The Result type achieves the same goal through values instead of control flow — a more functional, more elegant approach.</p>
 <p>The full implementation is available in my <a rel="noopener external" target="_blank" href="https://github.com/gertjana/filament-calculator-springboot">Filament project</a>.</p>

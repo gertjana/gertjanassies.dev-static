@@ -162,7 +162,7 @@ https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;rust_embassy.png
 <li>Part 4: Optional: Charger to Car communication (Mode2)</li>
 </ul>
 </blockquote>
-<h2 id="the-old">The old</h2>
+<h2 id="the-old"><a class="zola-anchor" href="#the-old" aria-label="Anchor link for: the-old">The old</a></h2>
 <p>It took me a while to get back to this, work and personal life took priority, but I've picked up this project again and rewrote it completely</p>
 <p>As you can see in the previous article, I was using standard Rust and was very low level spawning threads and sharing data through Mutexes</p>
 <p>Which meant I had to do most of the plumbing myself, which could lead to bugs and probably race-conditions.</p>
@@ -176,7 +176,7 @@ thread:spawn(move || {
 });
 </code></pre>
 <p>As the <code>Charger</code> is wrapped in an <code>Arc</code> (Atomically Reference Counted) each clone will produce a new <code>Arc</code> Instance which points to the same allocation while increasing a reference count. The mutex is needed to keep the underlying Charger accessible to only one Thread at a time.</p>
-<h2 id="the-new">The new</h2>
+<h2 id="the-new"><a class="zola-anchor" href="#the-new" aria-label="Anchor link for: the-new">The new</a></h2>
 <p>But this is all water under the bridge as I changed the implementation to use the Embassy Framework, which is similar to other async frameworks but specifically for small microcontrollers.</p>
 <p>I also switched to <code>no_std</code> which is Rust without the standard library. This practically means no heap allocations, so we use <code>&amp;str</code> instead of <code>String</code></p>
 <p>The above code will now look like this:</p>
@@ -206,8 +206,8 @@ async fn some_async_task(charger) {
 <blockquote>
 <p>Note that that task is in waiting state until a message comes in, taking no cpu time what so ever or need delays to 'free up' the thread.</p>
 </blockquote>
-<h3 id="channels-workings">Channels workings</h3>
-<h5 id="normal-channel">Normal channel</h5>
+<h3 id="channels-workings"><a class="zola-anchor" href="#channels-workings" aria-label="Anchor link for: channels-workings">Channels workings</a></h3>
+<h5 id="normal-channel"><a class="zola-anchor" href="#normal-channel" aria-label="Anchor link for: normal-channel">Normal channel</a></h5>
 <p>A normal channel can have multiple tasks putting messages in there, in our case changes in the hardware that will cause state changes.</p>
 <pre><code data-lang="rust">/// Message queue for charger input events
 pub static STATE_IN_CHANNEL: Channel&lt;CriticalSectionRawMutex, InputEvent, 10&gt; = Channel::new();
@@ -228,7 +228,7 @@ async fn receiving_task(charger) {
     ...
 }
 </code></pre>
-<h5 id="publish-subscribe">Publish/Subscribe:</h5>
+<h5 id="publish-subscribe"><a class="zola-anchor" href="#publish-subscribe" aria-label="Anchor link for: publish-subscribe">Publish/Subscribe:</a></h5>
 <p>In our case state changes that needs to be propagated to the hardware</p>
 <pre><code data-lang="rust">/// PubSub channel for charger state changes
 pub static STATE_PUBSUB: PubSubChannel&lt;
@@ -270,37 +270,37 @@ async fn subscribe_task() {
 <li>Tasks that listen to these state changes and interact with the hardware (Led that set the right color, Solenoid locking cable, Relay switching Power to the Cable, etc.)</li>
 <li>Tasks that communicate through MQTT to an OCPP Backend, provide a Wifi network stack, queries an NTP server for the current time, but thats for the next article.</li>
 </ul>
-<h2 id="the-state-machine">The State Machine</h2>
+<h2 id="the-state-machine"><a class="zola-anchor" href="#the-state-machine" aria-label="Anchor link for: the-state-machine">The State Machine</a></h2>
 <p>Here's how the state machine looks:
 <Image path="/content-images/charger_state_machine.png" alt="State Machine" thumbnail_width="600" /></p>
 <p>And if you're brave, here's the complete architecture, (every green or blue rectangle is an embassy task, all communication between tasks go through channels)
 <Image path="/content-images/charger_architecture.png" alt="architecture" thumbnail_width="600" /></p>
-<h2 id="hardware">Hardware</h2>
+<h2 id="hardware"><a class="zola-anchor" href="#hardware" aria-label="Anchor link for: hardware">Hardware</a></h2>
 <p>I changed the ESP32 from an S3 (Xtensa CPU Architecture) to a C6 (RISC-V Architecture), primarily to avoid having to install the entire Xtensa SDK on my laptop. This also dramatically improved compilation times from a couple of minutes to around 35 seconds.</p>
 <p>I added an addressable Multi color LED (<a rel="noopener external" target="_blank" href="https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf">WS1218</a>) and a RFID Reader (<a rel="noopener external" target="_blank" href="https://www.handsontec.com/dataspecs/RC522.pdf">RC522</a>)</p>
-<h3 id="the-updated-schematic">The updated schematic:</h3>
+<h3 id="the-updated-schematic"><a class="zola-anchor" href="#the-updated-schematic" aria-label="Anchor link for: the-updated-schematic">The updated schematic:</a></h3>
 <Image path="/content-images/charger_schematic.png" alt="Schematic" thumbnail_width="600" />
-<h3 id="a-nice-3d-rendering-made-with-fusion360">A nice 3D Rendering made with Fusion360</h3>
+<h3 id="a-nice-3d-rendering-made-with-fusion360"><a class="zola-anchor" href="#a-nice-3d-rendering-made-with-fusion360" aria-label="Anchor link for: a-nice-3d-rendering-made-with-fusion360">A nice 3D Rendering made with Fusion360</a></h3>
 <Image path="/content-images/3d_render.png" alt="3D render" thumbnail_width="600" />
-<h3 id="front-with-acrylate-cover">Front with Acrylate cover</h3>
+<h3 id="front-with-acrylate-cover"><a class="zola-anchor" href="#front-with-acrylate-cover" aria-label="Anchor link for: front-with-acrylate-cover">Front with Acrylate cover</a></h3>
 <p>The 3D printed part covers the pins that might contain high voltages.
 <Image path="/content-images/charger_front.png" alt="Front PCB" thumbnail_width="600" /></p>
-<h3 id="back-showing-esp32-c6-connectors-and-relay">Back showing ESP32-C6, connectors and Relay</h3>
+<h3 id="back-showing-esp32-c6-connectors-and-relay"><a class="zola-anchor" href="#back-showing-esp32-c6-connectors-and-relay" aria-label="Anchor link for: back-showing-esp32-c6-connectors-and-relay">Back showing ESP32-C6, connectors and Relay</a></h3>
 <Image path="/content-images/charger_back.png" alt="Back PCB" thumbnail_width="600" />
 <p>You can find all the schematic and PCB files in the kicad subdirectory of the <a rel="noopener external" target="_blank" href="https://github.com/gertjana/charger-esp32c6-embassy/tree/main/kicad">project</a></p>
-<h2 id="the-result">The Result</h2>
+<h2 id="the-result"><a class="zola-anchor" href="#the-result" aria-label="Anchor link for: the-result">The Result</a></h2>
 <ul>
 <li>We now have an application that is very responsive to what's happening</li>
 <li>Embassy handles the concurrency, which will reduce bugs and possible race conditions</li>
 <li>It will handle the scarce resources of embedded microcontroller's a lot better</li>
 </ul>
-<h2 id="conclusion">Conclusion</h2>
+<h2 id="conclusion"><a class="zola-anchor" href="#conclusion" aria-label="Anchor link for: conclusion">Conclusion</a></h2>
 <p>It's possible to write safe async code in rust on ESP32 microcontrollers.
 Working within the <code>no_std</code> constraints was more manageable than expected, especially with the help of crates like 'alloc' and 'heapless' which help with alternative ways of allocation where needed.</p>
 <p>The Embassy framework helps me to use the same programming concepts as in normal applications using for instance the Tokio async runtime.</p>
 <p>For future articles, I will discuss network communication, setting up Wifi, getting the time from an NTP Server and talking to a backoffice using MQTT and the OCPP Protocol</p>
 <p>If you're interested in getting started with Embassy and Rust on microcontrollers, I highly recommend the <a rel="noopener external" target="_blank" href="https://embassy.dev/book/dev/index.html">Embassy book</a> as an excellent starting point.</p>
-<h2 id="references">References</h2>
+<h2 id="references"><a class="zola-anchor" href="#references" aria-label="Anchor link for: references">References</a></h2>
 <ul>
 <li>Code/Design files: https://github.com/gertjana/charger-esp32c6-embassy/</li>
 <li>ESP32-C6 microcontroller: https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/</li>

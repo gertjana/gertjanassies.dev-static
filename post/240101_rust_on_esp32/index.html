@@ -158,7 +158,7 @@ What they also did was create a bunch of rust crates that allows access to the c
 <p>There are two modes to write your code, <code>no_std</code> and <code>std</code></p>
 <p>With the <code>no_std</code>, you cannot use Rust its standard library, which makes your application smaller, but you have to do a lot yourself, there are peripheral access and hardware abstraction crates and crates to setup wifi, logging, storage, etc, these are very much device specific. but you have to do all the wiring up.</p>
 <p>Therefore I will focus on the higher level <code>std</code> approach which allows the use of all the goodies the standard library brings, plus more device independent abstractions which makes the code much more portable to other ESP32 devices.</p>
-<h2 id="application-model">Application model</h2>
+<h2 id="application-model"><a class="zola-anchor" href="#application-model" aria-label="Anchor link for: application-model">Application model</a></h2>
 <p>The application model for the <code>std</code> mode look like this:</p>
 <Image path="/content-images/application_model_light.png" alt="Application Model" thumbnail_width="600" />
 <p>The following libraries are made available</p>
@@ -179,16 +179,16 @@ What they also did was create a bunch of rust crates that allows access to the c
 |   ├── esp-idf-sys v0.33.7
 </code></pre>
 <br style="clear:both;" />
-<h2 id="use-case">Use case</h2>
+<h2 id="use-case"><a class="zola-anchor" href="#use-case" aria-label="Anchor link for: use-case">Use case</a></h2>
 <p>As my daily work is all about allowing EV Drivers to charge their cars, I've decided to make a small EV charger</p>
 <p>For this I need to control GPIO (General Purpose Input Output) Pins to enable charging (relay), lock the cable (solenoid), display the charger state (multicolor led) and communicate to a backend (MQTT / IoT)</p>
 <Image path="/content-images/stamp_c3u_01.png" alt="Application Model" thumbnail_width="600" />
-<h3 id="hardware">hardware</h3>
+<h3 id="hardware"><a class="zola-anchor" href="#hardware" aria-label="Anchor link for: hardware">hardware</a></h3>
 <p>I decided to use a <a rel="noopener external" target="_blank" href="http://docs.m5stack.com/en/core/stamp_c3u">M5 Stamp C3U</a> that I had lying around which is based on the ESP-32 C3U chip, a 1 core 32 bits RISC-V cpu running on 160Mhz</p>
 <p>It has 400Kb RAM and 4Mb Flash and has Wifi and Bluetooth capabilities</p>
 <p>There are 14 GPIO Pins, that can be setup als digital or analog input/ouput, and some of them use serial protocols like UART, I2C, I2S and SPI
 so plenty to play around with</p>
-<h3 id="setup">setup</h3>
+<h3 id="setup"><a class="zola-anchor" href="#setup" aria-label="Anchor link for: setup">setup</a></h3>
 <p>To get started I used the cookiecutter template Espressif has created: <a rel="noopener external" target="_blank" href="https://github.com/esp-rs/esp-idf-template">https://github.com/esp-rs/esp-idf-template</a></p>
 <p>This should also be your starting point, if you want to play with it yourselves.</p>
 <p>After installing the prerequisites a simple</p>
@@ -227,7 +227,7 @@ App/part. size:    559,520/4,128,768 bytes, 13.55%
 <pre><code data-lang="sh">&gt; espflash monitor
 </code></pre>
 <p>It will show you all the messages logged to the console, you can also add <code>--monitor</code> to the flash command to do it in one go</p>
-<h2 id="the-code">The Code</h2>
+<h2 id="the-code"><a class="zola-anchor" href="#the-code" aria-label="Anchor link for: the-code">The Code</a></h2>
 <p>My first thoughts were that I would have to create multiple running tasks, that would handle controlling the hardware and communicating with the backend. so first I had to find out how to do that in rust and how I can communicate changes to those tasks.</p>
 <p>As the C code IDF Framwork is based on the FreeRTOS Kernel, I knew about things like <code>xTaskPinnedToCore()</code> which runs a task in parallel to the main thread, and the <code>xQueue*</code> API to send receive messages between tasks, unfortunately xTaskPinnedToCore() only allows C functions as a parameter, so no Rust goodies in there (or at least not to my knowledge, what's the signature of a rust function in C?)</p>
 <p>But as I can use the standard library, <code>std::thread::spawn</code> is available to which I can pass a closure, but how to communicate changes?</p>
@@ -343,7 +343,7 @@ fn main() -&gt; Result {
 <li>Setup Wifi and MQTT to communicate with a backend, using the OCPP protocol</li>
 <li>Optionally: Control Pilot (CP) communications between the charger and the car over a Type2 Mennekes connector</li>
 </ul>
-<h2 id="references">References</h2>
+<h2 id="references"><a class="zola-anchor" href="#references" aria-label="Anchor link for: references">References</a></h2>
 <ul>
 <li>Code: https://github.com/gertjana/charger_rust_esp32_c3/tree/806cba4c933c5211d2c4f4759c223452b8426158</li>
 <li>esp-idf-template: https://github.com/esp-rs/esp-idf-template</li>

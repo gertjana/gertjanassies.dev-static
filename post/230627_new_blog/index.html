@@ -154,7 +154,7 @@ https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;new_blog_top.jpg
     import Tag from '$src/components/Tag.svelte'
     import Mermaid from '$src/components/Mermaid.svelte'
 </script>
-<h2 id="learning-experience">Learning experience</h2>
+<h2 id="learning-experience"><a class="zola-anchor" href="#learning-experience" aria-label="Anchor link for: learning-experience">Learning experience</a></h2>
 <p>I wanted to learn more about creating web applications with <a rel="noopener external" target="_blank" href="https://kit.svelte.dev/docs/introduction">SvelteKit</a> (which consists of Svelte and Vite)</p>
 <p>so I decided to make a personal blog</p>
 <p>so what is <a rel="noopener external" target="_blank" href="https://kit.svelte.dev/">Sveltekit</a>? (from the website)</p>
@@ -163,7 +163,7 @@ https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;new_blog_top.jpg
 </blockquote>
 <p>Sveltekit uses <a rel="noopener external" target="_blank" href="https://svelte.dev/">Svelte</a> (an UI framework like react) and <a rel="noopener external" target="_blank" href="https://vitejs.dev/">vite</a> (frontend tooling to help develop/run locally, with automatic reloading and caching for fast development)
 and takes most of the configuration and routing away.</p>
-<h2 id="markdown">Markdown</h2>
+<h2 id="markdown"><a class="zola-anchor" href="#markdown" aria-label="Anchor link for: markdown">Markdown</a></h2>
 <p>Thanks to the <a rel="noopener external" target="_blank" href="https://mdsvex.pngwn.io/">mdsvex</a> pre-processer, I can keep writing my blogs and most pages in markdown where it is possible to embed Svelte Components in your markdown, for more interactivity.</p>
 <p>Mdsvex will pre-process the content to first render the markdown and then pass the result on to svelte to render all the components.</p>
 <p>for instance the content for the homepage looks like this:</p>
@@ -184,7 +184,7 @@ This is my personal space where I talk about technology, coding, the maker space
 ...
 
 </code></pre>
-<h2 id="frontmatter">Frontmatter</h2>
+<h2 id="frontmatter"><a class="zola-anchor" href="#frontmatter" aria-label="Anchor link for: frontmatter">Frontmatter</a></h2>
 <p>Frontmatter is a convention to put metadata at the top of your markdown blog, mdsvex supports that out of the box, so when it pre-processes your markdown page, it will add a metadata field which contains all that information.</p>
 <p>Here's an example from this blog article:</p>
 <pre><code data-lang="yaml">---
@@ -199,7 +199,7 @@ published: true
 
 ---
 </code></pre>
-<h2 id="a-word-about-routing">A word about routing</h2>
+<h2 id="a-word-about-routing"><a class="zola-anchor" href="#a-word-about-routing" aria-label="Anchor link for: a-word-about-routing">A word about routing</a></h2>
 <p>This is how the content of the <code>/src/routes</code> directory looks, sveltekit automatically builds routes to the pages that start with +.</p>
 <pre><code data-lang="bash">.
 └── src
@@ -246,7 +246,7 @@ flowchart LR
     engine-->page.server.ts-->page.ts-->page.svelte
 </Mermaid>
 <p>this also shows you you can embed <a rel="noopener external" target="_blank" href="https://mermaid.js.org/">mermaid</a> diagrams in the blog pages</p>
-<h2 id="how-to-render-a-blog-article">How to render a blog article</h2>
+<h2 id="how-to-render-a-blog-article"><a class="zola-anchor" href="#how-to-render-a-blog-article" aria-label="Anchor link for: how-to-render-a-blog-article">How to render a blog article</a></h2>
 <p>so here's some code that gets the list of posts in this blog</p>
 <pre><code data-lang="typescript">    // $lib/server/posts.ts
     type GlobEntry = {
@@ -329,7 +329,7 @@ export const load: PageLoad = async ({ data }) =&gt; {
 <pre><code data-lang="svelte">&lt;Tag path=&quot;/blog&quot; type=&quot;category&quot; text=&quot;code&quot; /&gt;
 </code></pre>
 <p>and here it is working: <Tag path="/blog" type="category" text="code" />  click on and it will take you to list of blogs that have the code category</p>
-<h2 id="deployment">Deployment</h2>
+<h2 id="deployment"><a class="zola-anchor" href="#deployment" aria-label="Anchor link for: deployment">Deployment</a></h2>
 <p>I decided to check out <a rel="noopener external" target="_blank" href="https://render.com">render.com</a> to deploy this blog and that was by far the best and easiest experience I've had so far</p>
 <p>All I had to do was</p>
 <ul>
@@ -344,12 +344,12 @@ export const load: PageLoad = async ({ data }) =&gt; {
 <tr><td style="text-align: left">gertjanassies.dev.</td><td>86400</td><td>IN</td><td>CAA</td><td>0 issuewild "letsencrypt.org"</td></tr>
 </tbody></table>
 <p>Render will automatically issue an SSL Certificate from the certificate authority mentioned in the CAA records and deploy the app on every commit pushed to the main branch of the repo</p>
-<h2 id="what-s-to-or-not-to-love">What's to (or not to) love</h2>
+<h2 id="what-s-to-or-not-to-love"><a class="zola-anchor" href="#what-s-to-or-not-to-love" aria-label="Anchor link for: what-s-to-or-not-to-love">What's to (or not to) love</a></h2>
 <p>As with most javascript/typescript frameworks, it can all too quickly becomes a bit of a mess, although during the work I learned more and more at how it all works, so I revisited working but somewhat crappy code multiple times.</p>
 <p>So lets categorize that as a somewhat steep learning curve and my tendency to just start assembling the swedish furniture instead of reading the manual first.</p>
 <p>I think with the modular (components) setup, thought out defaults, and ability to run the component's code on the server or client (or both) makes it a very powerful and flexible framework.</p>
 <p>Vite making developing a pleasure with it's almost instantly refreshing pages everytime you press save. and Typescript making sure you're component properties/attributes can only hold the right stuff.</p>
-<h2 id="references">References</h2>
+<h2 id="references"><a class="zola-anchor" href="#references" aria-label="Anchor link for: references">References</a></h2>
 <ul>
 <li><a rel="noopener external" target="_blank" href="https://github.com/gertjana/gertjanassies.dev">Blog code</a></li>
 <li><a rel="noopener external" target="_blank" href="https://kit.svelte.dev">Sveltekit</a></li>

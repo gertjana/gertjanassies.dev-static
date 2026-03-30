@@ -152,11 +152,11 @@ https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;neo_trinkey.jpg
       
 
       <div class="post-markdown-content">
-        <h2 id="introduction">Introduction</h2>
+        <h2 id="introduction"><a class="zola-anchor" href="#introduction" aria-label="Anchor link for: introduction">Introduction</a></h2>
 <p>You know those viral videos about companies installing software to monitor if employees are actually working by tracking keyboard and mouse activity? Well, this post is certainly not about that, but about avoiding your laptop going to sleep during presentations, long-running tasks, or when you're just reading documentation on your screen.</p>
 <p>This is a story of building a pocket-sized USB device that prevents my laptop from sleeping, complete with pretty LED animations and using touch buttons to control it.
 The entire project only took a couple of hours, thanks to MicroPython and the <a rel="noopener external" target="_blank" href="https://www.adafruit.com/product/4870">Adafruit Neo Trinkey</a>.</p>
-<h2 id="hardware">Hardware</h2>
+<h2 id="hardware"><a class="zola-anchor" href="#hardware" aria-label="Anchor link for: hardware">Hardware</a></h2>
 <p><img src="/content-images/neo_trinkey.jpg" alt="Neo Trinkey Device" /></p>
 <p><strong>What is it?</strong></p>
 <ul>
@@ -175,7 +175,7 @@ The entire project only took a couple of hours, thanks to MicroPython and the <a
 <li><strong>MicroPython ready</strong>: Adafruit has excellent support for running CircuitPython (a variant of MicroPython) on all their boards.</li>
 </ol>
 <p>The beauty of this hardware choice is that you don't need any additional components. No resistors, no external LEDs, no complicated wiring diagrams. Everything you need is on this one tiny board. This makes it perfect for beginners or anyone who just wants to get a project done quickly without dealing with hardware complexity.</p>
-<h2 id="what-s-micropython">What's MicroPython?</h2>
+<h2 id="what-s-micropython"><a class="zola-anchor" href="#what-s-micropython" aria-label="Anchor link for: what-s-micropython">What's MicroPython?</a></h2>
 <p>Before we dive into the code, let's talk about why MicroPython is such a game-changer for hardware projects.</p>
 <p><strong>MicroPython</strong> is a lean and efficient implementation of Python 3 that's designed to run on microcontrollers. Think of it as taking the friendly, readable Python syntax you might know from web development or data science, and shrinking it down to fit on tiny hardware with limited memory and processing power.</p>
 <p><strong>Why MicroPython is perfect for makers:</strong></p>
@@ -187,7 +187,7 @@ The entire project only took a couple of hours, thanks to MicroPython and the <a
 </ol>
 <p><strong>CircuitPython vs MicroPython:</strong></p>
 <p>For this project, I'm actually using <strong>CircuitPython</strong>, which is Adafruit's fork of MicroPython. CircuitPython is specifically optimized for Adafruit hardware and includes additional libraries for their products. The differences are minor, think of CircuitPython as "MicroPython with batteries included for Adafruit boards."</p>
-<h3 id="installation">Installation</h3>
+<h3 id="installation"><a class="zola-anchor" href="#installation" aria-label="Anchor link for: installation">Installation</a></h3>
 <p>Getting started with CircuitPython on the Neo Trinkey is surprisingly simple:</p>
 <p><strong>Step 1: Download CircuitPython</strong></p>
 <ul>
@@ -225,9 +225,9 @@ You can use any text editor you like. I personally use VS Code with the CircuitP
 │   └── adafruit_hid/
 └── boot_out.txt
 </code></pre>
-<h2 id="software-how-it-works">Software: How It Works</h2>
+<h2 id="software-how-it-works"><a class="zola-anchor" href="#software-how-it-works" aria-label="Anchor link for: software-how-it-works">Software: How It Works</a></h2>
 <p>Now for the fun part—let's look at how the code works. The beauty of MicroPython is that the code is remarkably readable, even if you've never written embedded code before.</p>
-<h3 id="the-big-picture">The Big Picture</h3>
+<h3 id="the-big-picture"><a class="zola-anchor" href="#the-big-picture" aria-label="Anchor link for: the-big-picture">The Big Picture</a></h3>
 <p>Our device has a simple state machine:</p>
 <ol>
 <li><strong>Idle</strong> (blue LEDs) - Device is plugged in but not keeping the laptop awake</li>
@@ -235,7 +235,7 @@ You can use any text editor you like. I personally use VS Code with the CircuitP
 <li><strong>Quiet mode</strong> - All LED animations are disabled for stealth operation</li>
 </ol>
 <p>The user controls these states with two touch pads, and the device provides visual feedback through the NeoPixel LEDs.</p>
-<h3 id="initialization-and-setup">Initialization and Setup</h3>
+<h3 id="initialization-and-setup"><a class="zola-anchor" href="#initialization-and-setup" aria-label="Anchor link for: initialization-and-setup">Initialization and Setup</a></h3>
 <pre><code data-lang="python">import board
 import touchio
 import neopixel
@@ -258,7 +258,7 @@ keyboard = Keyboard(usb_hid.devices)
 mouse = Mouse(usb_hid.devices)
 </code></pre>
 <p>This initialization is beautifully simple. We import the libraries we need and set up our hardware. The <code>board</code> module gives us access to the specific pins on our Neo Trinkey, while <code>neopixel</code>, <code>touchio</code>, and <code>usb_hid</code> let us control the LEDs, touch pads, and USB HID (Human Interface Device) functionality.</p>
-<h3 id="touch-detection">Touch Detection</h3>
+<h3 id="touch-detection"><a class="zola-anchor" href="#touch-detection" aria-label="Anchor link for: touch-detection">Touch Detection</a></h3>
 <pre><code data-lang="python">def check_touch_buttons():
     &quot;&quot;&quot;Check if touch buttons are pressed and update state&quot;&quot;&quot;
     global is_active, quiet_mode
@@ -277,7 +277,7 @@ mouse = Mouse(usb_hid.devices)
         time.sleep(0.3)  # Debounce delay
 </code></pre>
 <p>Capacitive touch detection is incredibly simple with CircuitPython. The <code>touch1.value</code> property returns <code>True</code> when you touch the pad. We add a small delay (<code>time.sleep(0.3)</code>) to debounce—preventing multiple triggers from a single touch.</p>
-<h3 id="keep-awake-actions">Keep-Awake Actions</h3>
+<h3 id="keep-awake-actions"><a class="zola-anchor" href="#keep-awake-actions" aria-label="Anchor link for: keep-awake-actions">Keep-Awake Actions</a></h3>
 <p>Here's where the magic happens. We randomly choose one of three actions to simulate user activity:</p>
 <pre><code data-lang="python">import random
 
@@ -308,7 +308,7 @@ def perform_keep_awake_action():
 <li><strong>F15 key</strong>: Most operating systems don't have this key mapped to anything, so pressing it registers activity without side effects</li>
 <li><strong>Mouse movements</strong>: Tiny 1-pixel movements that you won't even notice</li>
 </ul>
-<h3 id="led-animations">LED Animations</h3>
+<h3 id="led-animations"><a class="zola-anchor" href="#led-animations" aria-label="Anchor link for: led-animations">LED Animations</a></h3>
 <p>One of the most satisfying parts of this project is the LED feedback:</p>
 <pre><code data-lang="python">def circular_animation(color):
     &quot;&quot;&quot;Animate LEDs in a circular pattern&quot;&quot;&quot;
@@ -334,7 +334,7 @@ def show_status_led():
     pixels.show()
 </code></pre>
 <p>The circular animation gives visual confirmation that an action occurred, while the status LED provides quick feedback about the current state. Keeping the LEDs on for only 2 seconds prevents them from being distracting during use.</p>
-<h3 id="main-loop">Main Loop</h3>
+<h3 id="main-loop"><a class="zola-anchor" href="#main-loop" aria-label="Anchor link for: main-loop">Main Loop</a></h3>
 <pre><code data-lang="python">is_active = False
 quiet_mode = False
 last_action_time = time.monotonic()
@@ -362,7 +362,7 @@ while True:
 <li>Sleep briefly to avoid maxing out the CPU</li>
 </ol>
 <p>The <code>time.monotonic()</code> function gives us a steady clock that doesn't jump around due to time adjustments, perfect for timing-based logic.</p>
-<h2 id="conclusion">Conclusion</h2>
+<h2 id="conclusion"><a class="zola-anchor" href="#conclusion" aria-label="Anchor link for: conclusion">Conclusion</a></h2>
 <p>Building this keep-awake device was a perfect introduction to the makerspace world. In just a couple of hours, with about €10 worth of hardware and around 100 lines of Python code, I created something useful that hopefully sparks the imagination.</p>
 <p><strong>What makes this project special:</strong></p>
 <ul>
@@ -377,7 +377,7 @@ while True:
 <li>How simple USB HID programming can be</li>
 <li>That you don't need to be an electrical engineer to build cool hardware projects</li>
 </ul>
-<h3 id="next-steps">Next Steps</h3>
+<h3 id="next-steps"><a class="zola-anchor" href="#next-steps" aria-label="Anchor link for: next-steps">Next Steps</a></h3>
 <p>If you want to extend this project, here are some ideas:</p>
 <ul>
 <li>Play around with the colors and timings</li>
@@ -385,7 +385,7 @@ while True:
 <li>Randomly let it type 'All your base are belong to us' every now and then</li>
 <li>as a (not very secure) authentication device: store and let it type out your password when pressing one of the touch buttons</li>
 </ul>
-<h3 id="references-and-resources">References and Resources</h3>
+<h3 id="references-and-resources"><a class="zola-anchor" href="#references-and-resources" aria-label="Anchor link for: references-and-resources">References and Resources</a></h3>
 <ul>
 <li><strong>Project Repository</strong>: <a rel="noopener external" target="_blank" href="https://github.com/gertjana/trinkey_keep_alive">github.com/gertjana/trinkey_keep_alive</a></li>
 <li><strong>Hardware</strong>: <a rel="noopener external" target="_blank" href="https://www.adafruit.com/product/4870">Adafruit Neo Trinkey</a></li>

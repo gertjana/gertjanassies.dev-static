@@ -154,7 +154,7 @@ One thing to help with that is to make sure our docker containers are as small a
 This will also help in other areas, less software running means less things can crash and a significantly smaller attack surface, so stability and security will increase too, Hoorah!</p>
 <p>The example I'm going to expand upon works with a small go application but could be applied to almost any language that compiles to a native application.</p>
 <p>If you want to dive into the code first, here's the repo: <a rel="noopener external" target="_blank" href="https://gitlab.com/gertjana/tinyweb">https://gitlab.com/gertjana/tinyweb</a></p>
-<h2 id="something-to-test-with">Something to test with</h2>
+<h2 id="something-to-test-with"><a class="zola-anchor" href="#something-to-test-with" aria-label="Anchor link for: something-to-test-with">Something to test with</a></h2>
 <p>The infamous hello world application here is done with the <a rel="noopener external" target="_blank" href="https://echo.labstack.com/">echo</a> web framework just to have something I can verify working from within the container.</p>
 <pre><code data-lang="go">package main
 import (
@@ -173,7 +173,7 @@ func hello(c echo.Context) error {
   return c.String(http.StatusOK, &quot;Hello, World!&quot;)
 }
 </code></pre>
-<h2 id="build-a-normal-docker-container-for-your-app">Build a normal docker container for your app</h2>
+<h2 id="build-a-normal-docker-container-for-your-app"><a class="zola-anchor" href="#build-a-normal-docker-container-for-your-app" aria-label="Anchor link for: build-a-normal-docker-container-for-your-app">Build a normal docker container for your app</a></h2>
 <pre><code data-lang="docker">FROM golang:1.16
 RUN mkdir -p /app
 COPY main.go /app
@@ -187,7 +187,7 @@ CMD \[&quot;/app/service&quot;\]
 <blockquote>
 <p>Image size: 968 Mb (968212150) almost a Gb!</p>
 </blockquote>
-<h2 id="a-multistage-docker-image">A multistage docker image</h2>
+<h2 id="a-multistage-docker-image"><a class="zola-anchor" href="#a-multistage-docker-image" aria-label="Anchor link for: a-multistage-docker-image">A multistage docker image</a></h2>
 <pre><code data-lang="docker">FROM golang:1.16 AS builderCOPY main.go /app
 COPY go.\* /app
 WORKDIR /app
@@ -209,7 +209,7 @@ CMD [&quot;/service&quot;]
 <blockquote>
 <p>Image size: 8.8 Mb (8799493)</p>
 </blockquote>
-<h2 id="remove-debug-info">Remove debug info</h2>
+<h2 id="remove-debug-info"><a class="zola-anchor" href="#remove-debug-info" aria-label="Anchor link for: remove-debug-info">Remove debug info</a></h2>
 <p>with the -s -w ldflags you can tell the compiler to not put any debug information in the binary. (for production systems it would be prudent to also create an image with the debug information in case you need to fix an urgent issue)</p>
 <p>The Docker file is the same as above except for the following line</p>
 <pre><code data-lang="docker">RUN CGO\_ENABLED=0 GOOS=linux go build **\-ldflags=&quot;-s -w&quot;** -o dist/service main.go
@@ -217,7 +217,7 @@ CMD [&quot;/service&quot;]
 <blockquote>
 <p>Image size: 6.5 Mb (6559840)</p>
 </blockquote>
-<h2 id="compress-binary-with-upx">Compress binary with UPX</h2>
+<h2 id="compress-binary-with-upx"><a class="zola-anchor" href="#compress-binary-with-upx" aria-label="Anchor link for: compress-binary-with-upx">Compress binary with UPX</a></h2>
 <p><a rel="noopener external" target="_blank" href="https://upx.github.io/">UPX</a> is a tool that compresses executables.</p>
 <p>after the compile step in the build stage, the following will download and execute upx on the freshly build application.</p>
 <pre><code data-lang="docker">ADD https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64\_linux.tar.xz upx-3.96-amd64\_linux.tar.xz
@@ -228,7 +228,7 @@ RUN ./upx --brute /app/dist/service
 <blockquote>
 <p>Resulting Image size: 2.6 Mb (2567632)</p>
 </blockquote>
-<h2 id="conclusion">Conclusion</h2>
+<h2 id="conclusion"><a class="zola-anchor" href="#conclusion" aria-label="Anchor link for: conclusion">Conclusion</a></h2>
 <p>to summarize the images created with their sizes</p>
 <table><thead><tr><th>Image</th><th style="text-align: center">Debug info</th><th style="text-align: center">UPX compression</th><th>Size</th><th>Percentage</th></tr></thead><tbody>
 <tr><td>golang</td><td style="text-align: center">yes</td><td style="text-align: center">no</td><td>968212150</td><td>100.00%</td></tr>
@@ -243,7 +243,7 @@ Multi-stage builds make it possible to have an image with all the tools needed t
 <pre><code data-lang="bash">&gt; docker inspect -f &quot;{{ .Size }}&quot; gertjana/tinyweb:tiniest
 2567632
 </code></pre>
-<h2 id="references">References</h2>
+<h2 id="references"><a class="zola-anchor" href="#references" aria-label="Anchor link for: references">References</a></h2>
 <ul>
 <li><a rel="noopener external" target="_blank" href="https://gitlab.com/gertjana/tinyweb">https://gitlab.com/gertjana/tinyweb</a>
 where all the shown code lives</li>
@@ -256,7 +256,7 @@ a small but valid ini t system</li>
 <li><a rel="noopener external" target="_blank" href="https://upx.github.io/">https://upx.github.io/</a>
 a free, portable, extendable, high-performance executable packer</li>
 </ul>
-<h2 id="image-attribution">Image attribution</h2>
+<h2 id="image-attribution"><a class="zola-anchor" href="#image-attribution" aria-label="Anchor link for: image-attribution">Image attribution</a></h2>
 <p>courtesy <a rel="noopener external" target="_blank" href="https://unsplash.com/@guibolduc">https://unsplash.com/@guibolduc</a></p>
 
       </div>
