@@ -19,31 +19,34 @@ That is all working nice and dandy, giving me a chance to write some small assem
 
 ## Improving the situation
 
+
 But where it comes to visualisation, the [MAX1000 FPGA board](https://www.trenz-electronic.de/en/MAX1000-IoT-Maker-Board-16kLE-32-MByte-RAM-8-MByte-Flash-6.15-x-2.5-cm/TEI0001-04-FBC84A) has 8 leds in a row where i use the `OUT Ra, 2` instruction to show the contents of one of the 8bit registers.
 
-For instance here it is running a program, that uses the SHL (Shift left) and SHR (Shift right) instructions to simulate the light pattern on the KITT car from the Knightrider television series
+For instance here it is running a program, that uses the SHL (Shift left) and SHR (Shift right) instructions to simulate the light pattern on the KITT car from the Knightrider television series.
 
 <img alt="MAX1000" src="/content-images/max_1000_knightrider.gif" class="float-right" />
 
-```nasm
+```armasm
+.equ LEFT_EDGE  0x80
+.equ RIGHT_EDGE 0x01
 
-        LDI  R1, 0x80       ; R1 = 0x20  - leftmost edge
-        LDI  R2, 1          ; R2 = 0x01  — rightmost edge
-        MOV  R7, R1         ; R7 = 0x80 (LED[0] on), start scanning right
-        OUT  R7, 2          ; display initial pattern
+        LDI  R1, LEFT_EDGE  
+        LDI  R2, RIGHT_EDGE 
+        MOV  R7, R1         
+        OUT  R7, 2          ; display pattern on leds
 
 scan_right:
-        CMP  R7, R2         ; R7 == 0x01 (rightmost edge)?
-        JZ   scan_left      ; yes → reverse, scan left
+        CMP  R7, R2         ; right edge reached?
+        JZ   scan_left      ; yes -> reverse, scan left
         SHR  R7, R7         ; no  → step right
-        OUT  R7, 2          ; display updated pattern
+        OUT  R7, 2          
         JMP  scan_right
 
 scan_left:
-        CMP  R1, R7         ; R7 == 0x80 (leftmost edge)?
+        CMP  R1, R7         ; left edge reached?
         JZ   scan_right     ; yes → reverse, scan right
         SHL  R7, R7         ; no  → step left
-        OUT  R7, 2          ; display updated pattern
+        OUT  R7, 2          
         JMP  scan_left
 ```
 
@@ -103,3 +106,9 @@ I also gave Claude the capture file with all the measurements, but that turned o
 What could we have done better? well, what we want to display, the fonts and the actual SPI protocol is all in one file. In a normal application that would be split up in the SPI implementation module with a clear interface. to be called from the application. but for a Proof of Concept this is fine.
 
 Can't wait for the display to arrive
+
+## UPDATE
+
+The display has arrived and after some tweaks (weak pull-up resistors) it's working, here's the knightrider example with a working display, showing the program name, registers, stack, flag and program counter
+
+![Knightrider with Display](/content-images/knight_rider_with_display.gif)

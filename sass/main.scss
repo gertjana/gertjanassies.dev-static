@@ -375,7 +375,7 @@ article:not(.post-list-item):not(.post-card) {
 
 .float-right {
   float: right;
-  margin: 0 0 1rem 1.5rem;
+  margin: 0 0 1rem 2.5rem !important;
 }
 
 .float-left {
@@ -390,6 +390,18 @@ article:not(.post-list-item):not(.post-card) {
 
 .post-markdown-content a:hover {
   text-decoration: underline;
+}
+
+.zola-anchor,
+.zola-anchor:visited,
+.zola-anchor:hover,
+.zola-anchor:active,
+.post-markdown-content a.zola-anchor,
+.post-markdown-content a.zola-anchor:visited,
+.post-markdown-content a.zola-anchor:hover,
+.post-markdown-content a.zola-anchor:active {
+  color: inherit;
+  text-decoration: none;
 }
 
 .post-markdown-content table {
