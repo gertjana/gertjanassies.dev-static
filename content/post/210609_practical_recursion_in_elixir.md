@@ -9,6 +9,7 @@ tags = ['elixir', 'recursion']
 [extra]
 author = 'Gertjan Assies'
 image = '/content-images/practical_recursion_top.jpg'
+math = true
 +++
 
 Usually, when the new year starts, a lot of people are starting their "new years resolutions", which usually are things like exercise more, eat healthier, which non-quantitive nature are easy to postpone or avoid, therefore I rather set goals.

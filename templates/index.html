@@ -25,7 +25,7 @@
                 {% endif %}
               </div>
               <div class="post-meta">
-                <time class="post-date">{{ post.date | date(format="%Y-%m-%d") }}</time>
+                <time class="post-date" datetime="{{ post.date | date(format='%Y-%m-%d') }}">{{ post.date | date(format="%Y-%m-%d") }}</time>
                 <span class="post-author">By {{ post.extra.author | default(value="Gertjan Assies") }}</span>
               </div>
             </div>
