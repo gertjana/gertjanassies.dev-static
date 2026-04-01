@@ -5,6 +5,8 @@ default_language = "en"
 compile_sass = true
 build_search_index = false
 minify_html = false
+generate_feeds = true
+feed_filenames = ["atom.xml"]
 
 taxonomies = [
   {name = "categories", paginate_by = 20, feed = false},

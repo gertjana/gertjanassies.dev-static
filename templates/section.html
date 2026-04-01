@@ -3,6 +3,8 @@
 {% block title %}Blog - gertjanassies.dev{% endblock title %}
 {% block og_title %}Blog - gertjanassies.dev{% endblock og_title %}
 {% block twitter_title %}Blog - gertjanassies.dev{% endblock twitter_title %}
+{% block og_description %}{{ section.description | default(value=config.description) }}{% endblock og_description %}
+{% block twitter_description %}{{ section.description | default(value=config.description) }}{% endblock twitter_description %}
 {% block og_url %}{{ config.base_url }}/post/{% endblock og_url %}
 {% block canonical %}{{ config.base_url }}/post/{% endblock canonical %}
 
