@@ -1,0 +1,2347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <title>gertjanassies.dev</title>
+    <subtitle>Gertjan Assies personal blog, articles about coding and the maker space</subtitle>
+    <link rel="self" type="application/atom+xml" href="https://gertjanassies.dev/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://gertjanassies.dev"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2026-03-10T00:00:00+00:00</updated>
+    <id>https://gertjanassies.dev/atom.xml</id>
+    <entry xml:lang="en">
+        <title>Experimenting with AI in FPGA Development</title>
+        <published>2026-03-10T00:00:00+00:00</published>
+        <updated>2026-03-10T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/260310_ai_in_electronics_design/"/>
+        <id>https://gertjanassies.dev/post/260310_ai_in_electronics_design/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/260310_ai_in_electronics_design/">&lt;h2 id=&quot;the-premise&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-premise&quot; aria-label=&quot;Anchor link for: the-premise&quot;&gt;The Premise&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;As an exercise to see how &#x27;good&#x27; LLM&#x27;s are getting I&#x27;ve asked it to build a small CPU (The likes of the Z80 or 6502) in an FPGA I had in a drawer, that project can be found &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;cpu_in_fpga&quot;&gt;here&lt;&#x2F;a&gt; if you&#x27;re interested&lt;&#x2F;p&gt;
+&lt;p&gt;That is all working nice and dandy, giving me a chance to write some small assembly programs for it, bringing back fond memories from my youth.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;improving-the-situation&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#improving-the-situation&quot; aria-label=&quot;Anchor link for: improving-the-situation&quot;&gt;Improving the situation&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;But where it comes to visualisation, the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.trenz-electronic.de&#x2F;en&#x2F;MAX1000-IoT-Maker-Board-16kLE-32-MByte-RAM-8-MByte-Flash-6.15-x-2.5-cm&#x2F;TEI0001-04-FBC84A&quot;&gt;MAX1000 FPGA board&lt;&#x2F;a&gt; has 8 leds in a row where i use the &lt;code&gt;OUT Ra, 2&lt;&#x2F;code&gt; instruction to show the contents of one of the 8bit registers.&lt;&#x2F;p&gt;
+&lt;p&gt;For instance here it is running a program, that uses the SHL (Shift left) and SHR (Shift right) instructions to simulate the light pattern on the KITT car from the Knightrider television series.&lt;&#x2F;p&gt;
+&lt;img alt=&quot;MAX1000&quot; src=&quot;&#x2F;content-images&#x2F;max_1000_knightrider.gif&quot; class=&quot;float-right&quot; &#x2F;&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;armasm&quot;&gt;.equ LEFT_EDGE  0x80
+.equ RIGHT_EDGE 0x01
+
+        LDI  R1, LEFT_EDGE  
+        LDI  R2, RIGHT_EDGE 
+        MOV  R7, R1         
+        OUT  R7, 2          ; display pattern on leds
+
+scan_right:
+        CMP  R7, R2         ; right edge reached?
+        JZ   scan_left      ; yes -&amp;gt; reverse, scan left
+        SHR  R7, R7         ; no  → step right
+        OUT  R7, 2          
+        JMP  scan_right
+
+scan_left:
+        CMP  R1, R7         ; left edge reached?
+        JZ   scan_right     ; yes → reverse, scan right
+        SHL  R7, R7         ; no  → step left
+        OUT  R7, 2          
+        JMP  scan_left
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;moar-visuals&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#moar-visuals&quot; aria-label=&quot;Anchor link for: moar-visuals&quot;&gt;Moar visuals&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;So lets add a small OLED Screen, the board has an 12 pin connector to interface with the outside world in a standardized manner, and you can buy amongst other things a 128x32 OLED Display based on the SSD1306 chip which has an SPI Interface to be able to control it.&lt;&#x2F;p&gt;
+&lt;p&gt;Now while the display is on order. I started the SPI Implementation. (It&#x27;s a bit different from working with Arduino&#x27;s as they have loads of libraries available)&lt;&#x2F;p&gt;
+&lt;p&gt;SPI requires at least 4 wires&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Enable (or Clock Select) low is telling the device on the other end. I&#x27;m going to send you some data now&lt;&#x2F;li&gt;
+&lt;li&gt;D&#x2F;C (Data&#x2F;Command) High meaning i&#x27;m sending data (text or pixels), Low meaning I&#x27;m sending you commands f.i. clear screen, set cursor&lt;&#x2F;li&gt;
+&lt;li&gt;MOSI (Master out, Slave in) the actual data&lt;&#x2F;li&gt;
+&lt;li&gt;Clock (Pulses for each data bit that is send out)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;So Opencode with Claude Sonnet 4.6 in plan mode, I started warming it up to the SPI implementation. giving it links the the SPI protocol itself and the datasheet for the SSD1306 Display model and then asked it to implement a monitor that would show the content of the registers and flags, and the name of the program it is running.&lt;&#x2F;p&gt;
+&lt;p&gt;The resulting code is here &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;cpu_in_fpga&#x2F;blob&#x2F;pmod_spi&#x2F;rtl&#x2F;oled_monitor.v&quot;&gt;rtl&#x2F;oled_monitor.v&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;So far so good It created the implementation and tests for the testbench simulator but I wanted to be more sure that it would work. the LLM had similar ideas, as it was asking about what should we do next? One of it&#x27;s suggestions was to hook up an logic analyzer so I could judge whether or not it was correctly implemented.&lt;&#x2F;p&gt;
+&lt;p&gt;So I hooked up a &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.saleae.com&#x2F;logic&quot;&gt;logic analyzer&lt;&#x2F;a&gt;, set the protocol to SPI, so it recognizes the bytes of data, and let it run for a bit, the result is shown below&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;&#x2F;content-images&#x2F;logic_analyzer.png&quot; alt=&quot;logic analyzer screenshot&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;feedback-loop&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#feedback-loop&quot; aria-label=&quot;Anchor link for: feedback-loop&quot;&gt;Feedback loop&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Now the idea I had then is to feed that image back into opencode and ask it to use the logic analyzer screenshot to verify the implementation itself.&lt;&#x2F;p&gt;
+&lt;p&gt;It did so, relating the code and timings to the SPI output and even found a couple of bugs:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;text&quot;&gt;In summary:
+
+1	DC possibly one byte late for first font byte per line (visible in screenshot as 0x7F sent with DC=0)
+  High — display shows garbage on first column of each line&amp;#39;s first char after page-set
+2	Display On (0xAF) sent before VBAT+100ms delay, violating power-on sequence
+  High — could damage display or fail to initialize
+3	Reset applied before VDD is on
+  Medium — deviates from Digilent spec
+4	ST_DISP_ON state is dead code
+  Low — code smell
+5	SPI engine and FSM both modify spi_cs_n in same cycle when spi_done
+  Medium — works in simulation but fragile in synthesis
+
+The most directly confirmed bug from the screenshot is Bug 1 (DC=0 for the first font data byte after page commands), and Bug 2 (Display On sequencing). Would you like me to fix any of these?
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Asking it to fix it and repeating the exercise, I got a thumbs up. making the risk of this not working as low as possible, but still there, so there&#x27;s still the possibility I have to dive into the datasheet. to look at probably timing issues. but fingers crossed.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;conclusion&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#conclusion&quot; aria-label=&quot;Anchor link for: conclusion&quot;&gt;Conclusion&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;This way of working proofs that LLM&#x27;s can make you pretty productive, but you need to make sure it has the right context and good feedback on what it has done.&lt;&#x2F;p&gt;
+&lt;p&gt;I also gave Claude the capture file with all the measurements, but that turned out to be too much for it. it went under and never surfaced again.&lt;&#x2F;p&gt;
+&lt;p&gt;What could we have done better? well, what we want to display, the fonts and the actual SPI protocol is all in one file. In a normal application that would be split up in the SPI implementation module with a clear interface. to be called from the application. but for a Proof of Concept this is fine.&lt;&#x2F;p&gt;
+&lt;p&gt;Can&#x27;t wait for the display to arrive&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;update&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#update&quot; aria-label=&quot;Anchor link for: update&quot;&gt;UPDATE&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The display has arrived and after some tweaks (weak pull-up resistors) it&#x27;s working, here&#x27;s the knightrider example with a working display, showing the program name, registers, stack, flag and program counter&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;&#x2F;content-images&#x2F;knight_rider_with_display.gif&quot; alt=&quot;Knightrider with Display&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Another approach to checked exceptions with the Result type</title>
+        <published>2026-02-13T00:00:00+00:00</published>
+        <updated>2026-02-13T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/260213_another_approach_to_exceptions_in_java/"/>
+        <id>https://gertjanassies.dev/post/260213_another_approach_to_exceptions_in_java/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/260213_another_approach_to_exceptions_in_java/">&lt;p&gt;As changes are greater that I will be doing more Java engineering in the near future, I wanted to up my skills as the last time I did some serious Java work was 12 years ago&lt;&#x2F;p&gt;
+&lt;p&gt;One of the things I like to do is take concepts that I learned from other languages that are not present in the languages Im focusing on.&lt;&#x2F;p&gt;
+&lt;p&gt;As I learned from (mostly functional) programming languages is that failures should be modelled in your application just as much as successes (the happy path) and that something called an Exception is not really a semantically good way of handling those.&lt;&#x2F;p&gt;
+&lt;p&gt;Java&#x27;s checked exceptions often lead to verbose code, awkward abstractions, and layers of try-catch blocks that obscure business logic. What if there was a better way?&lt;&#x2F;p&gt;
+&lt;p&gt;Enter the &lt;strong&gt;Result type&lt;&#x2F;strong&gt; a functional programming pattern that represents operations that can succeed or fail, without resorting to exceptions for control flow.&lt;&#x2F;p&gt;
+&lt;p&gt;The application I chose to experiment with this, is a commandline application that manages filament (the rolls of plastic wire used in 3D-printing). so all the examples are from that sourcecode.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;the-problem-with-checked-exceptions&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-problem-with-checked-exceptions&quot; aria-label=&quot;Anchor link for: the-problem-with-checked-exceptions&quot;&gt;The Problem with Checked Exceptions&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Consider a typical repository method that reads from a file:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;public List&amp;lt;Filament&amp;gt; loadFilaments() throws IOException {
+    return objectMapper.readValue(
+        filePath.toFile(),
+        new TypeReference&amp;lt;List&amp;lt;Filament&amp;gt;&amp;gt;() {}
+    );
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;This signature forces every caller to either handle &lt;code&gt;IOException&lt;&#x2F;code&gt; or propagate it up the call stack. The problem compounds when you have multiple layers:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;&#x2F;&#x2F; Service layer - forced to propagate
+public List&amp;lt;Filament&amp;gt; getAllFilaments() throws IOException {
+    return repository.loadFilaments();
+}
+
+&#x2F;&#x2F; Command layer - more propagation
+public String listAll() throws IOException {
+    List&amp;lt;Filament&amp;gt; filaments = service.getAllFilaments();
+    return formatFilaments(filaments);
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Or worse, developers start swallowing exceptions inappropriately just to avoid dealing with them:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;try {
+    return service.getAllFilaments();
+} catch (IOException e) {
+    return Collections.emptyList(); &#x2F;&#x2F; Silent failure!
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;the-result-type-solution&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-result-type-solution&quot; aria-label=&quot;Anchor link for: the-result-type-solution&quot;&gt;The Result Type Solution&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The &lt;code&gt;Result&amp;lt;T, E&amp;gt;&lt;&#x2F;code&gt; type explicitly represents success or failure as a value, not an exception. Here&#x27;s the interface:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;public sealed interface Result&amp;lt;T, E&amp;gt;
+    permits Result.Success, Result.Failure {
+
+    record Success&amp;lt;T, E&amp;gt;(T value) implements Result&amp;lt;T, E&amp;gt; {}
+    record Failure&amp;lt;T, E&amp;gt;(E error) implements Result&amp;lt;T, E&amp;gt; {}
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Using Java&#x27;s sealed interfaces and records (introduced in Java 17), we get exhaustive pattern matching and immutability for free.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;wrapping-with-result-of&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#wrapping-with-result-of&quot; aria-label=&quot;Anchor link for: wrapping-with-result-of&quot;&gt;Wrapping with Result.of()&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The key to adoption is making it &lt;strong&gt;easy to wrap&lt;&#x2F;strong&gt; potentially failing operations. The &lt;code&gt;Result.of()&lt;&#x2F;code&gt; method handles this beautifully:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;@FunctionalInterface
+interface ThrowingSupplier&amp;lt;T&amp;gt; {
+    T get() throws Exception;
+}
+
+static &amp;lt;T, E&amp;gt; Result&amp;lt;T, E&amp;gt; of(
+    ThrowingSupplier&amp;lt;T&amp;gt; supplier,
+    Function&amp;lt;Exception, E&amp;gt; errorMapper
+) {
+    try {
+        return new Success&amp;lt;&amp;gt;(supplier.get());
+    } catch (Exception e) {
+        return new Failure&amp;lt;&amp;gt;(errorMapper.apply(e));
+    }
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now our repository becomes exception-free:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;@Override
+public Result&amp;lt;List&amp;lt;Filament&amp;gt;, String&amp;gt; loadAll() {
+    if (!Files.exists(filePath)) {
+        return new Failure&amp;lt;&amp;gt;(&amp;quot;File not found: &amp;quot; + filePath);
+    }
+
+    return Result.of(
+        () -&amp;gt; objectMapper.readValue(
+            filePath.toFile(),
+            new TypeReference&amp;lt;List&amp;lt;Filament&amp;gt;&amp;gt;() {}
+        ),
+        e -&amp;gt; &amp;quot;Failed to parse filament data: &amp;quot; + e.getMessage()
+    );
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Notice how we:&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;Handle the &quot;file not found&quot; case explicitly with a &lt;code&gt;Failure&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Wrap the Jackson parsing with &lt;code&gt;Result.of()&lt;&#x2F;code&gt; which catches any &lt;code&gt;Exception&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Map exceptions to user-friendly error messages using the error mapper function&lt;&#x2F;li&gt;
+&lt;li&gt;In this case the Error type is a String, but we could just as easily pass on the Exception type itself.&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h2 id=&quot;unwrapping-with-result-fold&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#unwrapping-with-result-fold&quot; aria-label=&quot;Anchor link for: unwrapping-with-result-fold&quot;&gt;Unwrapping with result.fold()&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The &lt;code&gt;fold()&lt;&#x2F;code&gt; method is where the magic happens. It forces you to handle both cases — success and failure — and produce a single unified result:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;default &amp;lt;R&amp;gt; R fold(
+    Function&amp;lt;E, R&amp;gt; onFailure,
+    Function&amp;lt;T, R&amp;gt; onSuccess
+) {
+    return switch (this) {
+        case Success&amp;lt;T, E&amp;gt;(T value) -&amp;gt; onSuccess.apply(value);
+        case Failure&amp;lt;T, E&amp;gt;(E error) -&amp;gt; onFailure.apply(error);
+    };
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;In practice, this looks incredibly clean at the command layer:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;@ShellMethod(key = &amp;quot;list&amp;quot;, value = &amp;quot;Lists all filaments&amp;quot;)
+public String listAll(
+    @ShellOption(defaultValue = &amp;quot;TABLE&amp;quot;) OutputFormat format
+) {
+    return filamentService.getAllFilaments().fold(
+        error -&amp;gt; &amp;quot;Failed to retrieve filaments: &amp;quot; + error,
+        filaments -&amp;gt; formatFilaments(filaments, format)
+    );
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;No try-catch blocks. No exception propagation. Just two functions: one for the error path, one for the success path. The compiler ensures you handle both.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;composition-and-transformation&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#composition-and-transformation&quot; aria-label=&quot;Anchor link for: composition-and-transformation&quot;&gt;Composition and Transformation&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The real power emerges when composing multiple operations. The Result type provides &lt;code&gt;map()&lt;&#x2F;code&gt;, &lt;code&gt;flatMap()&lt;&#x2F;code&gt;, and &lt;code&gt;mapError()&lt;&#x2F;code&gt; for elegant transformations:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;&#x2F;&#x2F; Transform successful values
+result.map(filaments -&amp;gt; filaments.size());
+
+&#x2F;&#x2F; Chain operations that also return Results
+result.flatMap(filament -&amp;gt;
+    calculateCost(filament.id(), length)
+);
+
+&#x2F;&#x2F; Transform error types
+result.mapError(msg -&amp;gt;
+    new ErrorResponse(500, msg)
+);
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Here&#x27;s a real example from a cost calculation service:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;public Result&amp;lt;CostCalculation, String&amp;gt; calculateCost(
+    int id,
+    double length
+) {
+    return filamentRepository.findById(id)
+        .flatMap(filament -&amp;gt;
+            filamentTypeRepository.findById(filament.filamentTypeId())
+                .map(type -&amp;gt; calculateCost(filament, type, length))
+        );
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;If either the filament or filament type lookup fails, the error propagates automatically. If both succeed, the calculation runs. All without a single try-catch block.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;benefits-in-practice&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#benefits-in-practice&quot; aria-label=&quot;Anchor link for: benefits-in-practice&quot;&gt;Benefits in Practice&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;After refactoring to the Result type, I&#x27;ve noticed:&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Cleaner signatures&lt;&#x2F;strong&gt;: Methods declare exactly what can go wrong without forcing exception handling.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;java&quot;&gt;&#x2F;&#x2F; Before
+List&amp;lt;Filament&amp;gt; getAllFilaments() throws IOException, ParseException
+
+&#x2F;&#x2F; After
+Result&amp;lt;List&amp;lt;Filament&amp;gt;, String&amp;gt; getAllFilaments()
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;&lt;strong&gt;Explicit error handling&lt;&#x2F;strong&gt;: Every &lt;code&gt;.fold()&lt;&#x2F;code&gt; is a visible decision point where errors are handled.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Better error messages&lt;&#x2F;strong&gt;: Error mapper functions let you provide context-specific messages at the failure point, not generic catch-all handlers.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Composability&lt;&#x2F;strong&gt;: Chaining operations with &lt;code&gt;flatMap()&lt;&#x2F;code&gt; creates pipelines that fail fast and propagate errors naturally.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;when-to-use-it&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#when-to-use-it&quot; aria-label=&quot;Anchor link for: when-to-use-it&quot;&gt;When to Use It&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The Result type shines for:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Repository&#x2F;data access layers&lt;&#x2F;strong&gt;: File I&#x2F;O, database queries, external API calls&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Business logic&lt;&#x2F;strong&gt;: Validation, calculations, domain operations that can fail&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Service boundaries&lt;&#x2F;strong&gt;: Clear success&#x2F;failure contracts between layers&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;You might still want traditional exceptions for:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Programmer errors&lt;&#x2F;strong&gt;: &lt;code&gt;NullPointerException&lt;&#x2F;code&gt;, &lt;code&gt;IllegalStateException&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Fatal errors&lt;&#x2F;strong&gt;: Out of memory, stack overflow&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Third-party code&lt;&#x2F;strong&gt;: When you don&#x27;t control the interface&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;conclusion&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#conclusion&quot; aria-label=&quot;Anchor link for: conclusion&quot;&gt;Conclusion&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The Result type transforms error handling from an afterthought into a first-class concern. By wrapping potentially failing operations with &lt;code&gt;Result.of()&lt;&#x2F;code&gt; in lower tiers and unwrapping with &lt;code&gt;result.fold()&lt;&#x2F;code&gt; at boundaries, you create code that&#x27;s more explicit, composable, and maintainable.&lt;&#x2F;p&gt;
+&lt;p&gt;Checked exceptions tried to force explicit error handling but ended up creating layers of ceremony. The Result type achieves the same goal through values instead of control flow — a more functional, more elegant approach.&lt;&#x2F;p&gt;
+&lt;p&gt;The full implementation is available in my &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;filament-calculator-springboot&quot;&gt;Filament project&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;the Result class specifically is here: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;filament-calculator-springboot&#x2F;blob&#x2F;main&#x2F;src&#x2F;main&#x2F;java&#x2F;dev&#x2F;gertjanassies&#x2F;filament&#x2F;util&#x2F;Result.java&quot;&gt;Result.java&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Building a USB Keep-Awake Device with MicroPython</title>
+        <published>2025-12-02T00:00:00+00:00</published>
+        <updated>2025-12-02T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/251202_trinkey_keep_alive/"/>
+        <id>https://gertjanassies.dev/post/251202_trinkey_keep_alive/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/251202_trinkey_keep_alive/">&lt;h2 id=&quot;introduction&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#introduction&quot; aria-label=&quot;Anchor link for: introduction&quot;&gt;Introduction&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;You know those viral videos about companies installing software to monitor if employees are actually working by tracking keyboard and mouse activity? Well, this post is certainly not about that, but about avoiding your laptop going to sleep during presentations, long-running tasks, or when you&#x27;re just reading documentation on your screen.&lt;&#x2F;p&gt;
+&lt;p&gt;This is a story of building a pocket-sized USB device that prevents my laptop from sleeping, complete with pretty LED animations and using touch buttons to control it.
+The entire project only took a couple of hours, thanks to MicroPython and the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.adafruit.com&#x2F;product&#x2F;4870&quot;&gt;Adafruit Neo Trinkey&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;hardware&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#hardware&quot; aria-label=&quot;Anchor link for: hardware&quot;&gt;Hardware&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;&lt;img src=&quot;&#x2F;content-images&#x2F;neo_trinkey.jpg&quot; alt=&quot;Neo Trinkey Device&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;What is it?&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;A tiny SAMD21 microcontroller (the same chip family used in the original Arduino Zero)&lt;&#x2F;li&gt;
+&lt;li&gt;Four RGB NeoPixel LEDs built right into the board&lt;&#x2F;li&gt;
+&lt;li&gt;Two capacitive touch pads you can activate by simply touching them&lt;&#x2F;li&gt;
+&lt;li&gt;USB-A connector that plugs directly into your laptop&lt;&#x2F;li&gt;
+&lt;li&gt;Costs under €10&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;&lt;strong&gt;Why is it perfect for this project?&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Plug-and-play&lt;&#x2F;strong&gt;: No breadboards, no wires, no soldering required. It&#x27;s literally just plug it in and go.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Visual feedback&lt;&#x2F;strong&gt;: The four NeoPixels give us beautiful RGB LED feedback so we always know what state our device is in.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Touch controls&lt;&#x2F;strong&gt;: Two touch-sensitive pads mean we can toggle features without any physical buttons.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Small form factor&lt;&#x2F;strong&gt;: It&#x27;s so tiny you can leave it plugged in and forget about it.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;MicroPython ready&lt;&#x2F;strong&gt;: Adafruit has excellent support for running CircuitPython (a variant of MicroPython) on all their boards.&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;The beauty of this hardware choice is that you don&#x27;t need any additional components. No resistors, no external LEDs, no complicated wiring diagrams. Everything you need is on this one tiny board. This makes it perfect for beginners or anyone who just wants to get a project done quickly without dealing with hardware complexity.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;what-s-micropython&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#what-s-micropython&quot; aria-label=&quot;Anchor link for: what-s-micropython&quot;&gt;What&#x27;s MicroPython?&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Before we dive into the code, let&#x27;s talk about why MicroPython is such a game-changer for hardware projects.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;MicroPython&lt;&#x2F;strong&gt; is a lean and efficient implementation of Python 3 that&#x27;s designed to run on microcontrollers. Think of it as taking the friendly, readable Python syntax you might know from web development or data science, and shrinking it down to fit on tiny hardware with limited memory and processing power.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Why MicroPython is perfect for makers:&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Instant gratification&lt;&#x2F;strong&gt;: No compile step. You write code, save it to the device, and it runs immediately.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Interactive REPL&lt;&#x2F;strong&gt;: You can connect via serial and type commands interactively, perfect for testing and debugging.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Rapid prototyping&lt;&#x2F;strong&gt;: Iterate quickly without the compile-upload-test cycle of traditional embedded development.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Great libraries&lt;&#x2F;strong&gt;: Access to hardware features through simple, well-documented libraries.&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;&lt;strong&gt;CircuitPython vs MicroPython:&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;For this project, I&#x27;m actually using &lt;strong&gt;CircuitPython&lt;&#x2F;strong&gt;, which is Adafruit&#x27;s fork of MicroPython. CircuitPython is specifically optimized for Adafruit hardware and includes additional libraries for their products. The differences are minor, think of CircuitPython as &quot;MicroPython with batteries included for Adafruit boards.&quot;&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;installation&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#installation&quot; aria-label=&quot;Anchor link for: installation&quot;&gt;Installation&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;Getting started with CircuitPython on the Neo Trinkey is surprisingly simple:&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Step 1: Download CircuitPython&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Visit &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;circuitpython.org&#x2F;&quot;&gt;circuitpython.org&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Find the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;circuitpython.org&#x2F;board&#x2F;neo_trinkey_m0&#x2F;&quot;&gt;Neo Trinkey M0 page&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Download the latest &lt;code&gt;.UF2&lt;&#x2F;code&gt; file (around 150KB)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;&lt;strong&gt;Step 2: Enter Bootloader Mode&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Plug in your Neo Trinkey&lt;&#x2F;li&gt;
+&lt;li&gt;Look for the tiny reset button on the board&lt;&#x2F;li&gt;
+&lt;li&gt;Double-click it quickly (like double-clicking a mouse)&lt;&#x2F;li&gt;
+&lt;li&gt;The board will reboot and appear as a USB drive called &lt;code&gt;TRINKETBOOT&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;&lt;strong&gt;Step 3: Install CircuitPython&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Drag and drop the &lt;code&gt;.UF2&lt;&#x2F;code&gt; file onto the &lt;code&gt;TRINKETBOOT&lt;&#x2F;code&gt; drive&lt;&#x2F;li&gt;
+&lt;li&gt;The device will automatically reboot&lt;&#x2F;li&gt;
+&lt;li&gt;It now appears as a drive called &lt;code&gt;CIRCUITPY&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;That&#x27;s it! CircuitPython is installed.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;&lt;strong&gt;Step 4: Install Required Libraries&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Download the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;circuitpython.org&#x2F;libraries&quot;&gt;Adafruit CircuitPython Library Bundle&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Extract the bundle and find the &lt;code&gt;adafruit_hid&lt;&#x2F;code&gt; folder&lt;&#x2F;li&gt;
+&lt;li&gt;Copy the entire &lt;code&gt;adafruit_hid&lt;&#x2F;code&gt; folder into the &lt;code&gt;lib&#x2F;&lt;&#x2F;code&gt; directory on your &lt;code&gt;CIRCUITPY&lt;&#x2F;code&gt; drive&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;Now you&#x27;re ready to write code! The entire installation process takes about 5 minutes.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Development environment:&lt;&#x2F;strong&gt;
+You can use any text editor you like. I personally use VS Code with the CircuitPython extension, but even Notepad works fine. Just edit the &lt;code&gt;code.py&lt;&#x2F;code&gt; file on the &lt;code&gt;CIRCUITPY&lt;&#x2F;code&gt; drive, save it, and your changes run immediately.&lt;&#x2F;p&gt;
+&lt;p&gt;In the end the files on the USB stick should look like this&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code&gt;CIRCUITPY&#x2F;
+├── code.py
+├── lib&#x2F;
+│   └── adafruit_hid&#x2F;
+└── boot_out.txt
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;software-how-it-works&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#software-how-it-works&quot; aria-label=&quot;Anchor link for: software-how-it-works&quot;&gt;Software: How It Works&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Now for the fun part—let&#x27;s look at how the code works. The beauty of MicroPython is that the code is remarkably readable, even if you&#x27;ve never written embedded code before.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;the-big-picture&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-big-picture&quot; aria-label=&quot;Anchor link for: the-big-picture&quot;&gt;The Big Picture&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;Our device has a simple state machine:&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Idle&lt;&#x2F;strong&gt; (blue LEDs) - Device is plugged in but not keeping the laptop awake&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Active&lt;&#x2F;strong&gt; (green LEDs) - Device is simulating user activity every 30 seconds&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Quiet mode&lt;&#x2F;strong&gt; - All LED animations are disabled for stealth operation&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;The user controls these states with two touch pads, and the device provides visual feedback through the NeoPixel LEDs.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;initialization-and-setup&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#initialization-and-setup&quot; aria-label=&quot;Anchor link for: initialization-and-setup&quot;&gt;Initialization and Setup&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;python&quot;&gt;import board
+import touchio
+import neopixel
+import usb_hid
+import time
+from adafruit_hid.keyboard import Keyboard
+from adafruit_hid.keycode import Keycode
+from adafruit_hid.mouse import Mouse
+
+# Configuration
+ACTION_INTERVAL = 30  # Seconds between keep-awake actions
+ACTION_OFFSET = 5     # Seconds before first action
+STATUS_LED_TIMEOUT = 2  # How long to show status LEDs
+
+# Initialize hardware
+pixels = neopixel.NeoPixel(board.NEOPIXEL, 4, brightness=0.2)
+touch1 = touchio.TouchIn(board.TOUCH1)  # Left pad - toggle active
+touch2 = touchio.TouchIn(board.TOUCH2)  # Right pad - toggle quiet mode
+keyboard = Keyboard(usb_hid.devices)
+mouse = Mouse(usb_hid.devices)
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;This initialization is beautifully simple. We import the libraries we need and set up our hardware. The &lt;code&gt;board&lt;&#x2F;code&gt; module gives us access to the specific pins on our Neo Trinkey, while &lt;code&gt;neopixel&lt;&#x2F;code&gt;, &lt;code&gt;touchio&lt;&#x2F;code&gt;, and &lt;code&gt;usb_hid&lt;&#x2F;code&gt; let us control the LEDs, touch pads, and USB HID (Human Interface Device) functionality.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;touch-detection&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#touch-detection&quot; aria-label=&quot;Anchor link for: touch-detection&quot;&gt;Touch Detection&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;python&quot;&gt;def check_touch_buttons():
+    &amp;quot;&amp;quot;&amp;quot;Check if touch buttons are pressed and update state&amp;quot;&amp;quot;&amp;quot;
+    global is_active, quiet_mode
+
+    # Touch 1: Toggle keep-awake on&#x2F;off
+    if touch1.value:
+        is_active = not is_active
+        flash_color((255, 0, 255))  # Magenta flash for feedback
+        show_status_led()
+        time.sleep(0.3)  # Debounce delay
+
+    # Touch 2: Toggle quiet mode
+    if touch2.value:
+        quiet_mode = not quiet_mode
+        flash_color((255, 128, 0))  # Orange flash for feedback
+        time.sleep(0.3)  # Debounce delay
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Capacitive touch detection is incredibly simple with CircuitPython. The &lt;code&gt;touch1.value&lt;&#x2F;code&gt; property returns &lt;code&gt;True&lt;&#x2F;code&gt; when you touch the pad. We add a small delay (&lt;code&gt;time.sleep(0.3)&lt;&#x2F;code&gt;) to debounce—preventing multiple triggers from a single touch.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;keep-awake-actions&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#keep-awake-actions&quot; aria-label=&quot;Anchor link for: keep-awake-actions&quot;&gt;Keep-Awake Actions&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;Here&#x27;s where the magic happens. We randomly choose one of three actions to simulate user activity:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;python&quot;&gt;import random
+
+def perform_keep_awake_action():
+    &amp;quot;&amp;quot;&amp;quot;Randomly perform one of three keep-awake actions&amp;quot;&amp;quot;&amp;quot;
+    action = random.randint(1, 3)
+
+    if action == 1:
+        # Press F15 key (rarely used, non-intrusive)
+        keyboard.send(Keycode.F15)
+    elif action == 2:
+        # Move mouse 1 pixel right and back
+        mouse.move(x=1)
+        time.sleep(0.1)
+        mouse.move(x=-1)
+    else:
+        # Move mouse 1 pixel down and back
+        mouse.move(y=1)
+        time.sleep(0.1)
+        mouse.move(y=-1)
+
+    # Show action animation (unless in quiet mode)
+    if not quiet_mode:
+        circular_animation((255, 255, 0))  # Yellow animation
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Each action is subtle enough not to disrupt your work:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;F15 key&lt;&#x2F;strong&gt;: Most operating systems don&#x27;t have this key mapped to anything, so pressing it registers activity without side effects&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Mouse movements&lt;&#x2F;strong&gt;: Tiny 1-pixel movements that you won&#x27;t even notice&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h3 id=&quot;led-animations&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#led-animations&quot; aria-label=&quot;Anchor link for: led-animations&quot;&gt;LED Animations&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;One of the most satisfying parts of this project is the LED feedback:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;python&quot;&gt;def circular_animation(color):
+    &amp;quot;&amp;quot;&amp;quot;Animate LEDs in a circular pattern&amp;quot;&amp;quot;&amp;quot;
+    for i in range(4):
+        pixels.fill((0, 0, 0))  # Clear all
+        pixels[i] = color        # Light up one LED
+        pixels.show()
+        time.sleep(0.1)
+    pixels.fill((0, 0, 0))
+    pixels.show()
+
+def show_status_led():
+    &amp;quot;&amp;quot;&amp;quot;Show current status with LED color&amp;quot;&amp;quot;&amp;quot;
+    if is_active:
+        color = (0, 255, 0)  # Green for active
+    else:
+        color = (0, 0, 255)  # Blue for idle
+
+    pixels.fill(color)
+    pixels.show()
+    time.sleep(STATUS_LED_TIMEOUT)
+    pixels.fill((0, 0, 0))  # Turn off after timeout
+    pixels.show()
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;The circular animation gives visual confirmation that an action occurred, while the status LED provides quick feedback about the current state. Keeping the LEDs on for only 2 seconds prevents them from being distracting during use.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;main-loop&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#main-loop&quot; aria-label=&quot;Anchor link for: main-loop&quot;&gt;Main Loop&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;python&quot;&gt;is_active = False
+quiet_mode = False
+last_action_time = time.monotonic()
+
+# Show initial status
+show_status_led()
+
+while True:
+    # Check for touch button input
+    check_touch_buttons()
+
+    # Perform keep-awake action if active
+    if is_active:
+        current_time = time.monotonic()
+        if current_time - last_action_time &amp;gt;= ACTION_INTERVAL:
+            perform_keep_awake_action()
+            last_action_time = current_time
+
+    time.sleep(0.1)  # Small delay to prevent CPU spinning
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;The main loop is refreshingly simple:&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;Check if the user touched either button&lt;&#x2F;li&gt;
+&lt;li&gt;If we&#x27;re active and enough time has passed, perform a keep-awake action&lt;&#x2F;li&gt;
+&lt;li&gt;Sleep briefly to avoid maxing out the CPU&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;The &lt;code&gt;time.monotonic()&lt;&#x2F;code&gt; function gives us a steady clock that doesn&#x27;t jump around due to time adjustments, perfect for timing-based logic.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;conclusion&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#conclusion&quot; aria-label=&quot;Anchor link for: conclusion&quot;&gt;Conclusion&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Building this keep-awake device was a perfect introduction to the makerspace world. In just a couple of hours, with about €10 worth of hardware and around 100 lines of Python code, I created something useful that hopefully sparks the imagination.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;What makes this project special:&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;No complicated hardware&lt;&#x2F;strong&gt;: Everything runs on a single, self-contained board&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Beginner-friendly code&lt;&#x2F;strong&gt;: If you can write Python, you can write MicroPython&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Immediate results&lt;&#x2F;strong&gt;: See your code changes take effect instantly&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;&lt;strong&gt;What you will learn:&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;How accessible hardware projects have become thanks to MicroPython&lt;&#x2F;li&gt;
+&lt;li&gt;The joy of having physical feedback (LEDs!) for your code&lt;&#x2F;li&gt;
+&lt;li&gt;How simple USB HID programming can be&lt;&#x2F;li&gt;
+&lt;li&gt;That you don&#x27;t need to be an electrical engineer to build cool hardware projects&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h3 id=&quot;next-steps&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#next-steps&quot; aria-label=&quot;Anchor link for: next-steps&quot;&gt;Next Steps&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;If you want to extend this project, here are some ideas:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Play around with the colors and timings&lt;&#x2F;li&gt;
+&lt;li&gt;Make an annoyance device with no LEDs flashing, but randomly moves the mouse every now and then&lt;&#x2F;li&gt;
+&lt;li&gt;Randomly let it type &#x27;All your base are belong to us&#x27; every now and then&lt;&#x2F;li&gt;
+&lt;li&gt;as a (not very secure) authentication device: store and let it type out your password when pressing one of the touch buttons&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h3 id=&quot;references-and-resources&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#references-and-resources&quot; aria-label=&quot;Anchor link for: references-and-resources&quot;&gt;References and Resources&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Project Repository&lt;&#x2F;strong&gt;: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;trinkey_keep_alive&quot;&gt;github.com&#x2F;gertjana&#x2F;trinkey_keep_alive&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Hardware&lt;&#x2F;strong&gt;: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.adafruit.com&#x2F;product&#x2F;4870&quot;&gt;Adafruit Neo Trinkey&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;CircuitPython&lt;&#x2F;strong&gt;: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;circuitpython.org&#x2F;&quot;&gt;circuitpython.org&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;CircuitPython Libraries&lt;&#x2F;strong&gt;: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;circuitpython.org&#x2F;libraries&quot;&gt;CircuitPython Bundle&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Adafruit Learning System&lt;&#x2F;strong&gt;: Tons of great tutorials at &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;learn.adafruit.com&#x2F;&quot;&gt;learn.adafruit.com&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;&lt;strong&gt;A word of caution&lt;&#x2F;strong&gt;: While this device is great for legitimate uses like preventing screen timeout during presentations or while running long tasks, please be mindful of your workplace policies. This isn&#x27;t a tool for circumventing employee monitoring systems—that would be both unethical and likely against your employment terms. Use it responsibly!&lt;&#x2F;p&gt;
+&lt;p&gt;Now go forth and explore the makerspace! MicroPython and Adafruit make hardware projects accessible to everyone, and the only limit is your imagination. Happy making!&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Rust on ESP32 part 2.5 - Switching software to Rust no_std and Embassy</title>
+        <published>2025-10-03T00:00:00+00:00</published>
+        <updated>2025-10-03T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/251003_rust_on_esp32_2_5_embassy_no_std/"/>
+        <id>https://gertjanassies.dev/post/251003_rust_on_esp32_2_5_embassy_no_std/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/251003_rust_on_esp32_2_5_embassy_no_std/">&lt;blockquote&gt;
+&lt;p&gt;This is a series of articles about using Rust to program an ESP32 Microcontroller by building a minimal EV Charger.&lt;br&#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Part 1: &lt;a href=&quot;&#x2F;post&#x2F;240101_rust_on_esp32&quot;&gt;A Proof of Concept&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Part 2: &lt;a href=&quot;&#x2F;post&#x2F;240125_rust_on_esp32_2_hardware&quot;&gt;A minimal EV Charger hardware setup&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Part 2.5: &lt;a href=&quot;https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;251003_rust_on_esp32_2_5_embassy_no_std&#x2F;post&#x2F;240226_rust_on_esp32_2_5_embassy_no_std&quot;&gt;A rewrite using Rust no_std and the Embassy framework&lt;&#x2F;a&gt; (this article)&lt;&#x2F;li&gt;
+&lt;li&gt;Part 3: Network and Charger to backoffice communication (Wifi&#x2F; MQTT &#x2F; OCPP)&lt;&#x2F;li&gt;
+&lt;li&gt;Part 4: Optional: Charger to Car communication (Mode2)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;h2 id=&quot;the-old&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-old&quot; aria-label=&quot;Anchor link for: the-old&quot;&gt;The old&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;It took me a while to get back to this, work and personal life took priority, but I&#x27;ve picked up this project again and rewrote it completely&lt;&#x2F;p&gt;
+&lt;p&gt;As you can see in the previous article, I was using standard Rust and was very low level spawning threads and sharing data through Mutexes&lt;&#x2F;p&gt;
+&lt;p&gt;Which meant I had to do most of the plumbing myself, which could lead to bugs and probably race-conditions.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;let org_charger: Arc&amp;lt;Mutex&amp;lt;Charger&amp;gt;&amp;gt; = Arc::new(Mutex::new(Charger{id: &amp;quot;1&amp;quot;, state: &amp;quot;Available&amp;quot;}));
+
+let charger = org_charger.clone();
+thread:spawn(move || {
+    loop {
+        &#x2F;&#x2F; do something with the charger
+    }
+});
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;As the &lt;code&gt;Charger&lt;&#x2F;code&gt; is wrapped in an &lt;code&gt;Arc&lt;&#x2F;code&gt; (Atomically Reference Counted) each clone will produce a new &lt;code&gt;Arc&lt;&#x2F;code&gt; Instance which points to the same allocation while increasing a reference count. The mutex is needed to keep the underlying Charger accessible to only one Thread at a time.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;the-new&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-new&quot; aria-label=&quot;Anchor link for: the-new&quot;&gt;The new&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;But this is all water under the bridge as I changed the implementation to use the Embassy Framework, which is similar to other async frameworks but specifically for small microcontrollers.&lt;&#x2F;p&gt;
+&lt;p&gt;I also switched to &lt;code&gt;no_std&lt;&#x2F;code&gt; which is Rust without the standard library. This practically means no heap allocations, so we use &lt;code&gt;&amp;amp;str&lt;&#x2F;code&gt; instead of &lt;code&gt;String&lt;&#x2F;code&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;The above code will now look like this:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;
+#[esp_hal_embassy::main]
+async fn main(spawner: Spawner) {
+    let charger = mk_static!(Charger, Charger::new()); &#x2F;&#x2F;the make_static! macro allows creating static variables initialized at runtime
+    spawner.spawn(some_async_task(charger)).ok();
+}
+
+#[embassy_executor::task]
+async fn some_async_task(charger) {
+    loop {
+        &#x2F;&#x2F; do something with the charger
+        Timer::after(Duration::from_millis(100)).await; &#x2F;&#x2F; in case of non-blocking code wait a bit
+    }
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;This is more in line with how most async frameworks like Tokio work.&lt;&#x2F;p&gt;
+&lt;p&gt;Communication between Tasks is done with Channels where you are able to safely send and receive messages from other tasks which come in 2 flavours:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;many sender to 1 receiver&lt;&#x2F;li&gt;
+&lt;li&gt;1 publisher to many subscribers&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;The Charger is essentially a State Machine where certain events (cable inserted, card swiped) cause state transitions that produce other events (cable lock, current turns on, etc.)&lt;&#x2F;p&gt;
+&lt;p&gt;For instance, if the Charger&#x27;s state is &lt;code&gt;Available&lt;&#x2F;code&gt; and someone inserts a cable, the task watching that event will send a message to the state machine, which will change its state to &lt;code&gt;Preparing&lt;&#x2F;code&gt; and broadcast that state change to a PubSubChannel. A task responsible for controlling the LED color will then change the color from green to white.&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Note that that task is in waiting state until a message comes in, taking no cpu time what so ever or need delays to &#x27;free up&#x27; the thread.&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;h3 id=&quot;channels-workings&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#channels-workings&quot; aria-label=&quot;Anchor link for: channels-workings&quot;&gt;Channels workings&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;h5 id=&quot;normal-channel&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#normal-channel&quot; aria-label=&quot;Anchor link for: normal-channel&quot;&gt;Normal channel&lt;&#x2F;a&gt;&lt;&#x2F;h5&gt;
+&lt;p&gt;A normal channel can have multiple tasks putting messages in there, in our case changes in the hardware that will cause state changes.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;&#x2F;&#x2F;&#x2F; Message queue for charger input events
+pub static STATE_IN_CHANNEL: Channel&amp;lt;CriticalSectionRawMutex, InputEvent, 10&amp;gt; = Channel::new();
+
+&#x2F;&#x2F; task sending a message
+#[embassy_executor::task]
+async fn cable_detect_task(charger) {
+    ...
+    STATE_IN_CHANNEL.send(InputEvent.CableInserted).await;
+    ...
+}
+
+&#x2F;&#x2F; task sending a message
+#[embassy_executor::task]
+async fn receiving_task(charger) {
+    ...
+    let event = STATE_IN_CHANNEL.receive().await; &#x2F;&#x2F; blocks until message arrives
+    ...
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h5 id=&quot;publish-subscribe&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#publish-subscribe&quot; aria-label=&quot;Anchor link for: publish-subscribe&quot;&gt;Publish&#x2F;Subscribe:&lt;&#x2F;a&gt;&lt;&#x2F;h5&gt;
+&lt;p&gt;In our case state changes that needs to be propagated to the hardware&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;&#x2F;&#x2F;&#x2F; PubSub channel for charger state changes
+pub static STATE_PUBSUB: PubSubChannel&amp;lt;
+    CriticalSectionRawMutex,
+    (ChargerState, heapless::Vec&amp;lt;OutputEvent, 2&amp;gt;),
+    10, &#x2F;&#x2F; capacity
+    6, &#x2F;&#x2F; max subscribers
+    1, &#x2F;&#x2F; max publishers
+&amp;gt; = PubSubChannel::new();
+
+&#x2F;&#x2F; task that publishes
+#[embassy_executor::task]
+async fn publish_task() {
+    let publisher = STATE_PUBSUB.publisher().unwrap();
+    loop {
+        ...
+        publisher.publish_immediate(some_message);
+    }
+}
+
+&#x2F;&#x2F; task subscribed to the pubsub channel
+#[embassy_executor::task]
+async fn subscribe_task() {
+    ...
+    let mut subscriber = charger::STATE_PUBSUB.subscriber().unwrap();
+    loop {
+        if let embassy_sync::pubsub::WaitResult::Message((new_state, output_event)) =
+            subscriber.next_message().await &#x2F;&#x2F; this blocks until a message has been received
+            &#x2F;&#x2F; do something with the message
+        {
+    }
+    ...
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;so we have:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Tasks reacting to things happening on the hardware site (Insert Cable, Swipe Card, etc.)&lt;&#x2F;li&gt;
+&lt;li&gt;A charger state machine task that changes state based on these events (Available, Preparing, Charging, etc.)&lt;&#x2F;li&gt;
+&lt;li&gt;Tasks that listen to these state changes and interact with the hardware (Led that set the right color, Solenoid locking cable, Relay switching Power to the Cable, etc.)&lt;&#x2F;li&gt;
+&lt;li&gt;Tasks that communicate through MQTT to an OCPP Backend, provide a Wifi network stack, queries an NTP server for the current time, but thats for the next article.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;the-state-machine&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-state-machine&quot; aria-label=&quot;Anchor link for: the-state-machine&quot;&gt;The State Machine&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Here&#x27;s how the state machine looks:
+&lt;Image path=&quot;&#x2F;content-images&#x2F;charger_state_machine.png&quot; alt=&quot;State Machine&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;And if you&#x27;re brave, here&#x27;s the complete architecture, (every green or blue rectangle is an embassy task, all communication between tasks go through channels)
+&lt;Image path=&quot;&#x2F;content-images&#x2F;charger_architecture.png&quot; alt=&quot;architecture&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;hardware&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#hardware&quot; aria-label=&quot;Anchor link for: hardware&quot;&gt;Hardware&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;I changed the ESP32 from an S3 (Xtensa CPU Architecture) to a C6 (RISC-V Architecture), primarily to avoid having to install the entire Xtensa SDK on my laptop. This also dramatically improved compilation times from a couple of minutes to around 35 seconds.&lt;&#x2F;p&gt;
+&lt;p&gt;I added an addressable Multi color LED (&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;cdn-shop.adafruit.com&#x2F;datasheets&#x2F;WS2812B.pdf&quot;&gt;WS1218&lt;&#x2F;a&gt;) and a RFID Reader (&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.handsontec.com&#x2F;dataspecs&#x2F;RC522.pdf&quot;&gt;RC522&lt;&#x2F;a&gt;)&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;the-updated-schematic&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-updated-schematic&quot; aria-label=&quot;Anchor link for: the-updated-schematic&quot;&gt;The updated schematic:&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;charger_schematic.png&quot; alt=&quot;Schematic&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;h3 id=&quot;a-nice-3d-rendering-made-with-fusion360&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#a-nice-3d-rendering-made-with-fusion360&quot; aria-label=&quot;Anchor link for: a-nice-3d-rendering-made-with-fusion360&quot;&gt;A nice 3D Rendering made with Fusion360&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;3d_render.png&quot; alt=&quot;3D render&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;h3 id=&quot;front-with-acrylate-cover&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#front-with-acrylate-cover&quot; aria-label=&quot;Anchor link for: front-with-acrylate-cover&quot;&gt;Front with Acrylate cover&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;The 3D printed part covers the pins that might contain high voltages.
+&lt;Image path=&quot;&#x2F;content-images&#x2F;charger_front.png&quot; alt=&quot;Front PCB&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;back-showing-esp32-c6-connectors-and-relay&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#back-showing-esp32-c6-connectors-and-relay&quot; aria-label=&quot;Anchor link for: back-showing-esp32-c6-connectors-and-relay&quot;&gt;Back showing ESP32-C6, connectors and Relay&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;charger_back.png&quot; alt=&quot;Back PCB&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;You can find all the schematic and PCB files in the kicad subdirectory of the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;charger-esp32c6-embassy&#x2F;tree&#x2F;main&#x2F;kicad&quot;&gt;project&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;the-result&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-result&quot; aria-label=&quot;Anchor link for: the-result&quot;&gt;The Result&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;We now have an application that is very responsive to what&#x27;s happening&lt;&#x2F;li&gt;
+&lt;li&gt;Embassy handles the concurrency, which will reduce bugs and possible race conditions&lt;&#x2F;li&gt;
+&lt;li&gt;It will handle the scarce resources of embedded microcontroller&#x27;s a lot better&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;conclusion&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#conclusion&quot; aria-label=&quot;Anchor link for: conclusion&quot;&gt;Conclusion&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;It&#x27;s possible to write safe async code in rust on ESP32 microcontrollers.
+Working within the &lt;code&gt;no_std&lt;&#x2F;code&gt; constraints was more manageable than expected, especially with the help of crates like &#x27;alloc&#x27; and &#x27;heapless&#x27; which help with alternative ways of allocation where needed.&lt;&#x2F;p&gt;
+&lt;p&gt;The Embassy framework helps me to use the same programming concepts as in normal applications using for instance the Tokio async runtime.&lt;&#x2F;p&gt;
+&lt;p&gt;For future articles, I will discuss network communication, setting up Wifi, getting the time from an NTP Server and talking to a backoffice using MQTT and the OCPP Protocol&lt;&#x2F;p&gt;
+&lt;p&gt;If you&#x27;re interested in getting started with Embassy and Rust on microcontrollers, I highly recommend the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;embassy.dev&#x2F;book&#x2F;dev&#x2F;index.html&quot;&gt;Embassy book&lt;&#x2F;a&gt; as an excellent starting point.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;references&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#references&quot; aria-label=&quot;Anchor link for: references&quot;&gt;References&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Code&#x2F;Design files: https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;charger-esp32c6-embassy&#x2F;&lt;&#x2F;li&gt;
+&lt;li&gt;ESP32-C6 microcontroller: https:&#x2F;&#x2F;wiki.seeedstudio.com&#x2F;xiao_esp32c6_getting_started&#x2F;&lt;&#x2F;li&gt;
+&lt;li&gt;Embassy Framework: https:&#x2F;&#x2F;embassy.dev&#x2F;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Rust on ESP32 part 2 - The hardware</title>
+        <published>2024-01-25T00:00:00+00:00</published>
+        <updated>2024-01-25T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/240125_rust_on_esp32_2_hardware/"/>
+        <id>https://gertjanassies.dev/post/240125_rust_on_esp32_2_hardware/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/240125_rust_on_esp32_2_hardware/">&lt;blockquote&gt;
+&lt;p&gt;This is a series of articles about using Rust to program an ESP32 Microcontroller by building a minimal EV Charger.&lt;br&#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Part 1: &lt;a href=&quot;&#x2F;post&#x2F;240101_rust_on_esp32&quot;&gt;A Proof of Concept&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Part 2: &lt;a href=&quot;&#x2F;post&#x2F;240125_rust_on_esp32_2_hardware&quot;&gt;A minimal EV Charger hardware setup&lt;&#x2F;a&gt; (this article)&lt;&#x2F;li&gt;
+&lt;li&gt;Part 3: Network and Charger to backoffice communication (Wifi&#x2F; MQTT &#x2F; OCPP)&lt;&#x2F;li&gt;
+&lt;li&gt;Part 4: Optional: Charger to Car communication (Mode2)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;The previous &lt;a href=&quot;&#x2F;post&#x2F;240101_rust_on_esp32&quot;&gt;article&lt;&#x2F;a&gt; was about try-ing to get Rust running on a esp32 microcontroller.&lt;&#x2F;p&gt;
+&lt;p&gt;In there I started to set up as a charger for an Electric Vehicle, lets dive more into that by desiging the hardware.&lt;&#x2F;p&gt;
+&lt;p&gt;A simple as possible charger should:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Have a way to detect whether a cable is inserted or not (or simulated by a switch)&lt;&#x2F;li&gt;
+&lt;li&gt;be able to lock the cable with a solenoid (or simulated by a led)&lt;&#x2F;li&gt;
+&lt;li&gt;Allow swiping a card to start charging (or simulated with a button)&lt;&#x2F;li&gt;
+&lt;li&gt;Have a relay to apply power to the cable&lt;&#x2F;li&gt;
+&lt;li&gt;Visualize the state of the charger (the M5 Stamp has a multicolor led onboard, and I&#x27;ve added a small OLED display I had lying around)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;Putting all this into a schematic it looks something like this:&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;schematic2.png&quot; alt=&quot;Schematic&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;h2 id=&quot;managing-state&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#managing-state&quot; aria-label=&quot;Anchor link for: managing-state&quot;&gt;Managing State&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;As a Charger goes through several states during it&#x27;s operation (Available, Occupied, Charging, Error)
+a FSM (Finite State Machine) looks like a good way to model this.&lt;&#x2F;p&gt;
+&lt;p&gt;A FSM works as follows:&lt;&#x2F;p&gt;
+&lt;p&gt;Whenever something happens (an InputEvent), a cable gets inserted&#x2F;removed or some form of authentication is provided, a transision is made from one state to the next, resulting in an output event, for instance to tell the charger to lock the cable and start charging.&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;charger_eps32_state_diagram.png&quot; alt=&quot;FSM&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;Every Arrow is a &lt;code&gt;transition&lt;&#x2F;code&gt; call with the current &lt;code&gt;State&lt;&#x2F;code&gt; and an &lt;code&gt;InputEvent&lt;&#x2F;code&gt; to a new &lt;code&gt;State&lt;&#x2F;code&gt; with an &lt;code&gt;OutputEvent&lt;&#x2F;code&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;code wise that will look like this:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;impl Charger {
+    pub fn transition(&amp;amp;mut self, input: ChargerInput) -&amp;gt; Result&amp;lt;(State, ChargerOutput), Error) {
+        let output = match (input, self.state.clone()) {
+            (ChargerInput::PlugIn, State::Available) =&amp;gt; {
+                self.set_state(State::Occupied);
+                ChargerOutput::Unlocked
+            }
+            (ChargerInput::PlugOut, State::Occupied) =&amp;gt; {
+                self.set_state(State::Available);
+                ChargerOutput::Unlocked
+            }
+            (ChargerInput::Swipe, State::Occupied) =&amp;gt; {
+                self.set_state(State::Charging);
+                ChargerOutput::LockedAndPowerIsOn
+            }
+            (ChargerInput::Swipe, State::Charging) =&amp;gt; {
+                self.set_state(State::Occupied);
+                ChargerOutput::Unlocked
+            }
+            _ =&amp;gt; {
+                Err(&amp;quot;An invalid transistion occurred&amp;quot;)
+            }
+        }
+       Ok((self.get_state(), output))
+    }
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;So now all it left is a bit of logic to do the transitions whenever an event happens&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;    &#x2F;&#x2F; setup is skipped, see previous blog, or code
+
+    button.enable_interrupt().unwrap();
+    notification.wait(esp_idf_svc::hal::delay::BLOCK);
+
+    match charger.transition(charger::ChargerInput::Swipe) {
+        Ok((ChargerState::Charging, charger::ChargerOutput::LockedAndPowerIsOn)) =&amp;gt; {
+            relay.set_high().unwrap();
+            solenoid.set_high().unwrap();
+        }
+        Ok((_, charger::ChargerOutput::Unlocked)) =&amp;gt; {
+            relay.set_low().unwrap();
+            solenoid.set_low().unwrap();
+        }
+        ...
+    }
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;pullupresistor.png&quot; alt=&quot;Application Model&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;The GPIO Port is configured as input with an pull-up resistor with the button connected to ground, meaning whenever the button is pressed, it will connect the input to ground (0) and when released the pull-up resistor will &#x27;pull&#x27; it to teh +5V (1) again (creating a Positive Edge (0 -&amp;gt; 1) event).&lt;&#x2F;p&gt;
+&lt;p&gt;As we have configured the button in the code to subscribe to a positive edge event, the code will unblock whenever the button is released.&lt;&#x2F;p&gt;
+&lt;p&gt;We then call the transition function with the current state and the input event &lt;code&gt;Swipe&lt;&#x2F;code&gt; which will give us a new state &lt;code&gt;Chargng&lt;&#x2F;code&gt; and a output &lt;code&gt;LockedAndPowerIsOn&lt;&#x2F;code&gt;, we then set the hardware to whatever the output is telling us.&lt;&#x2F;p&gt;
+&lt;p&gt;So that&#x27;s the hardware done, I&#x27;ve added a small oled display with an i2c interface, with the rust library that exists for this display, displaying information is a breeze:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;let peripherals = Peripherals::take().unwrap();
+let i2c = peripherals.i2c0;
+let sda = peripherals.pins.gpio21;
+let scl = peripherals.pins.gpio20;
+
+let i2c_config = I2cConfig::new().baudrate(100_000.into());
+let i2c = I2cDriver::new(i2c, sda, scl, &amp;amp;i2c_config)?;
+
+let interface = I2CDisplayInterface::new(i2c);
+let display = Ssd1306::new(
+        interface, DisplaySize128x64, DisplayRotation::Rotate180).into_terminal_mode();
+
+display.init();
+display.clear();
+
+write!(display, &amp;quot;Hello World&amp;quot;);
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Here&#x27;s how it looks on a breadboard, I&#x27;m using the button and led that are on the m5 Stamp to simulate the swiping of a card and displaying the charger state, a blue led to simulate the relay and a jumper to simulate the inserting of a cable.&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;breadboard.png&quot; alt=&quot;Breadboard&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;The next article will focus on sending and retrieving OCPP Messages to a backend by configuring the Wifi and MQTT Publisher and Subscriber.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;references&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#references&quot; aria-label=&quot;Anchor link for: references&quot;&gt;references&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Code: https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;charger_rust_esp32_c3&#x2F;tree&#x2F;cad15fb3a088cdd82d7dbfd5f9d16512b37e4d6f&lt;&#x2F;li&gt;
+&lt;li&gt;esp-idf-template: https:&#x2F;&#x2F;github.com&#x2F;esp-rs&#x2F;esp-idf-template&lt;&#x2F;li&gt;
+&lt;li&gt;M5 Stamp ESP32-C3U: https:&#x2F;&#x2F;docs.m5stack.com&#x2F;en&#x2F;core&#x2F;stamp_c3u&lt;&#x2F;li&gt;
+&lt;li&gt;The embedded rust book:  https:&#x2F;&#x2F;docs.rust-embedded.org&#x2F;book&#x2F;&lt;&#x2F;li&gt;
+&lt;li&gt;Espresiff ESP-32: https:&#x2F;&#x2F;www.espressif.com&#x2F;en&#x2F;products&#x2F;socs&#x2F;esp32&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Rust on ESP32</title>
+        <published>2024-01-04T00:00:00+00:00</published>
+        <updated>2024-01-04T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/240101_rust_on_esp32/"/>
+        <id>https://gertjanassies.dev/post/240101_rust_on_esp32/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/240101_rust_on_esp32/">&lt;blockquote&gt;
+&lt;p&gt;This is a series of articles about using Rust to program an ESP32 Microcontroller by building a minimal EV Charger.&lt;br&#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Part 1: &lt;a href=&quot;&#x2F;post&#x2F;240101_rust_on_esp32&quot;&gt;A Proof of Concept&lt;&#x2F;a&gt; (this article)&lt;&#x2F;li&gt;
+&lt;li&gt;Part 2: &lt;a href=&quot;&#x2F;post&#x2F;240125_rust_on_esp32_2_hardware&quot;&gt;A minimal EV Charger hardware setup&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Part 3: Network and Charger to backoffice communication (Wifi&#x2F; MQTT &#x2F; OCPP)&lt;&#x2F;li&gt;
+&lt;li&gt;Part 4: Optional: Charger to Car communication (Mode2)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;For the last couple of months, I&#x27;ve been learning myself how to program in &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;rustlang.org&quot;&gt;rust&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;The main reason was I was intrigued by Rust&#x27;s ownership &#x2F; borrow model, which allows for functional programming, without the need of making everything immutable.&lt;&#x2F;p&gt;
+&lt;p&gt;Immutable comes with copying values (instead of passing references) all over the place, which can become an issue when you want to sqeeze every bit of performance out of your application.&lt;&#x2F;p&gt;
+&lt;p&gt;As rust is considered more of a systems language, being close to the hardware, using it to write applications for microcontrollers makes sense.&lt;&#x2F;p&gt;
+&lt;p&gt;Luckily the makers of the ESP 32 chip &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.espressif.com&#x2F;en&#x2F;products&#x2F;socs&#x2F;esp32&quot;&gt;espressif&lt;&#x2F;a&gt; also created and maintain a development environment for these chips.
+What they also did was create a bunch of rust crates that allows access to the chip hardware and features.&lt;&#x2F;p&gt;
+&lt;p&gt;There are two modes to write your code, &lt;code&gt;no_std&lt;&#x2F;code&gt; and &lt;code&gt;std&lt;&#x2F;code&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;With the &lt;code&gt;no_std&lt;&#x2F;code&gt;, you cannot use Rust its standard library, which makes your application smaller, but you have to do a lot yourself, there are peripheral access and hardware abstraction crates and crates to setup wifi, logging, storage, etc, these are very much device specific. but you have to do all the wiring up.&lt;&#x2F;p&gt;
+&lt;p&gt;Therefore I will focus on the higher level &lt;code&gt;std&lt;&#x2F;code&gt; approach which allows the use of all the goodies the standard library brings, plus more device independent abstractions which makes the code much more portable to other ESP32 devices.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;application-model&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#application-model&quot; aria-label=&quot;Anchor link for: application-model&quot;&gt;Application model&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The application model for the &lt;code&gt;std&lt;&#x2F;code&gt; mode look like this:&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;application_model_light.png&quot; alt=&quot;Application Model&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;The following libraries are made available&lt;&#x2F;p&gt;
+&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Library&lt;&#x2F;th&gt;&lt;th&gt;Description&lt;&#x2F;th&gt;&lt;&#x2F;tr&gt;&lt;&#x2F;thead&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;esp-idf-svc&lt;&#x2F;td&gt;&lt;td&gt;Services like Wifi, Mqtt, Http&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;embedded-svc&lt;&#x2F;td&gt;&lt;td&gt;device independent api and abstractions for the services&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;esp-idf-hal&lt;&#x2F;td&gt;&lt;td&gt;safe wrappers around esp-idf-sys&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;embedded-hal&lt;&#x2F;td&gt;&lt;td&gt;device independent api and common traits for the hardware&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;esp-idf-sys&lt;&#x2F;td&gt;&lt;td&gt;unsafe bindings to the ESP hardware and features&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;&#x2F;tbody&gt;&lt;&#x2F;table&gt;
+&lt;p&gt;A filtered out dependency tree from &lt;code&gt;cargo tree&lt;&#x2F;code&gt; shows how the libraries depend on each other&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;├── esp-idf-hal v0.42.5
+│   ├── embedded-hal v0.2.7
+│   ├── esp-idf-sys v0.33.7
+├── esp-idf-svc v0.47.3
+│   ├── embedded-svc v0.26.4
+│   ├── esp-idf-hal v0.42.5
+|   ├── esp-idf-sys v0.33.7
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;br style=&quot;clear:both;&quot; &#x2F;&gt;
+&lt;h2 id=&quot;use-case&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#use-case&quot; aria-label=&quot;Anchor link for: use-case&quot;&gt;Use case&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;As my daily work is all about allowing EV Drivers to charge their cars, I&#x27;ve decided to make a small EV charger&lt;&#x2F;p&gt;
+&lt;p&gt;For this I need to control GPIO (General Purpose Input Output) Pins to enable charging (relay), lock the cable (solenoid), display the charger state (multicolor led) and communicate to a backend (MQTT &#x2F; IoT)&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;stamp_c3u_01.png&quot; alt=&quot;Application Model&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;h3 id=&quot;hardware&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#hardware&quot; aria-label=&quot;Anchor link for: hardware&quot;&gt;hardware&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;I decided to use a &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;http:&#x2F;&#x2F;docs.m5stack.com&#x2F;en&#x2F;core&#x2F;stamp_c3u&quot;&gt;M5 Stamp C3U&lt;&#x2F;a&gt; that I had lying around which is based on the ESP-32 C3U chip, a 1 core 32 bits RISC-V cpu running on 160Mhz&lt;&#x2F;p&gt;
+&lt;p&gt;It has 400Kb RAM and 4Mb Flash and has Wifi and Bluetooth capabilities&lt;&#x2F;p&gt;
+&lt;p&gt;There are 14 GPIO Pins, that can be setup als digital or analog input&#x2F;ouput, and some of them use serial protocols like UART, I2C, I2S and SPI
+so plenty to play around with&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;setup&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#setup&quot; aria-label=&quot;Anchor link for: setup&quot;&gt;setup&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;To get started I used the cookiecutter template Espressif has created: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;esp-rs&#x2F;esp-idf-template&quot;&gt;https:&#x2F;&#x2F;github.com&#x2F;esp-rs&#x2F;esp-idf-template&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;This should also be your starting point, if you want to play with it yourselves.&lt;&#x2F;p&gt;
+&lt;p&gt;After installing the prerequisites a simple&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;cargo generate esp-rs&#x2F;esp-idf-template cargo
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;will after answering a few questions generate a project for you.&lt;&#x2F;p&gt;
+&lt;p&gt;to build and flash it hook up your device to an usb port and do&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;&amp;gt; cargo build
+   Compiling rust-esp-charger v0.1.0 (&#x2F;Users&#x2F;gertjan&#x2F;Projects&#x2F;rust-esp-charger)
+    Finished dev [optimized + debuginfo] target(s) in 1.96s
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;and then:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;&amp;gt; espflash flash target&#x2F;riscv32imc-esp-espidf&#x2F;debug&#x2F;rust-esp-charger
+[2024-01-04T12:53:07Z INFO ] Detected 4 serial ports
+[2024-01-04T12:53:07Z INFO ] Ports which match a known common dev board are highlighted
+[2024-01-04T12:53:07Z INFO ] Please select a port
+❯ &#x2F;dev&#x2F;cu.usbmodem1101 - USB JTAG_serial debug unit
+  &#x2F;dev&#x2F;tty.usbmodem1101 - USB JTAG_serial debug unit
+  &#x2F;dev&#x2F;cu.Bluetooth-Incoming-Port
+  &#x2F;dev&#x2F;tty.Bluetooth-Incoming-Port
+[2024-01-04T12:54:07Z INFO ] Serial port: &amp;#39;&#x2F;dev&#x2F;cu.usbmodem1101&amp;#39;
+[2024-01-04T12:54:07Z INFO ] Connecting...
+[2024-01-04T12:54:07Z INFO ] Using flash stub
+Chip type:         esp32c3 (revision v0.3)
+Crystal frequency: 40MHz
+Flash size:        4MB
+Features:          WiFi, BLE
+MAC address:       84:f7:03:27:96:ec
+App&#x2F;part. size:    559,520&#x2F;4,128,768 bytes, 13.55%
+[00:00:04] [========================================]     271&#x2F;271
+[2024-01-04T12:54:13Z INFO ] Flashing has completed!
+
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;The target might differ depending on the type of your ESP32 , but the rest should be the same.&lt;&#x2F;p&gt;
+&lt;p&gt;If you do&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;&amp;gt; espflash monitor
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;It will show you all the messages logged to the console, you can also add &lt;code&gt;--monitor&lt;&#x2F;code&gt; to the flash command to do it in one go&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;the-code&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-code&quot; aria-label=&quot;Anchor link for: the-code&quot;&gt;The Code&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;My first thoughts were that I would have to create multiple running tasks, that would handle controlling the hardware and communicating with the backend. so first I had to find out how to do that in rust and how I can communicate changes to those tasks.&lt;&#x2F;p&gt;
+&lt;p&gt;As the C code IDF Framwork is based on the FreeRTOS Kernel, I knew about things like &lt;code&gt;xTaskPinnedToCore()&lt;&#x2F;code&gt; which runs a task in parallel to the main thread, and the &lt;code&gt;xQueue*&lt;&#x2F;code&gt; API to send receive messages between tasks, unfortunately xTaskPinnedToCore() only allows C functions as a parameter, so no Rust goodies in there (or at least not to my knowledge, what&#x27;s the signature of a rust function in C?)&lt;&#x2F;p&gt;
+&lt;p&gt;But as I can use the standard library, &lt;code&gt;std::thread::spawn&lt;&#x2F;code&gt; is available to which I can pass a closure, but how to communicate changes?&lt;&#x2F;p&gt;
+&lt;p&gt;When you access a variable in the closure that is defined outside of the closure the compiler will make you use the &lt;code&gt;move&lt;&#x2F;code&gt; keyword to explicitly move ownership to the closure.&lt;&#x2F;p&gt;
+&lt;p&gt;So for instance: if you have a simple &lt;code&gt;Charger&lt;&#x2F;code&gt; struct that has a field &lt;code&gt;state&lt;&#x2F;code&gt;, which holds the state of the charger (Available, Occupied, Charging, Error)
+and you want to access that from within the thread, the compiler will complain about the last line that the charger&#x27;s ownership has moved to the thread. as seen in the snippet below&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;let mut charger = Charger{id: &amp;quot;1&amp;quot;, state: &amp;quot;Available&amp;quot;}
+
+thread:spawn(move || {
+    println!(&amp;quot;Charger from thread: {:?}&amp;quot;, charger);
+    loop {
+        charger.state = &amp;quot;Charging&amp;quot;;
+        &#x2F;&#x2F; sleep a bit
+    }
+});
+
+println!(&amp;quot;Charger from main: {:?}&amp;quot;, charger);
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;To solve this we need to use two concepts from rust synchronisation utilities.&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;std::sync::Arc&amp;lt;T&amp;gt;&lt;&#x2F;code&gt; Arc stands for Atomically Reference Counted, This will keep a reference for each time you clone the object, and makes sure the original object is updated with any changes.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;code&gt;std::sync::Mutex&amp;lt;T&amp;gt;&lt;&#x2F;code&gt; A Mutex will lock the object so only one thread can update the object at a time&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;So to get the above working:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;let org_charger: Arc&amp;lt;Mutex&amp;lt;Charger&amp;gt;&amp;gt; = Arc::new(Mutex::new(Charger{id: &amp;quot;1&amp;quot;, state: &amp;quot;Available&amp;quot;}));
+
+let charger = org_charger.clone();
+thread:spawn(move || {
+    println!(&amp;quot;Charger from thread: {:?}&amp;quot;, charger);
+    loop {
+        charger.state = &amp;quot;Charging&amp;quot;;
+        &#x2F;&#x2F; sleep a bit
+    }
+});
+
+let charger = org_charger.clone();
+loop {
+    println!(&amp;quot;Charger from main: {:?}&amp;quot;, charger);
+    &#x2F;&#x2F; sleep a bit
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Note that because the charger moves into the thread, I can reuse the charger var as the first one is no longer in scope, also note that the object does not need to be mutable anymore.&lt;&#x2F;p&gt;
+&lt;p&gt;Now how to control the leds, relays, buttons that are needed to make this charger functional?&lt;&#x2F;p&gt;
+&lt;p&gt;That&#x27;s done through the &quot;General Purpose Input Output&quot; or GPIO, working with GPIO is pretty straightforward:&lt;&#x2F;p&gt;
+&lt;p&gt;Here we turn a led on when a button is pressed.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;use esp_idf_hal::delay::FreeRtos;
+use esp_idf_hal::gpio::*;
+use esp_idf_hal::peripherals::Peripherals;
+
+let peripherals = Peripherals::take()?;
+let mut led = PinDriver::output(peripherals.pins.gpio4)?;
+let mut button = PinDriver::input(peripherals.pins.gpio9)?;
+
+button.set_pull(Pull::Down)?;
+
+loop {
+    &#x2F;&#x2F; we are using thread::sleep here to make sure the watchdog isn&amp;#39;t triggered
+    FreeRtos::delay_ms(10);
+
+    if button.is_high() {
+        led.set_low()?;
+    } else {
+        led.set_high()?;
+    }
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Doing a button in a more async &#x27;wait until pressed then do something&#x27; is a bit more involved:&lt;&#x2F;p&gt;
+&lt;p&gt;First set up the button and an interrupt:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;use esp_idf_hal::peripherals::Peripherals;
+use esp_idf_svc::hal::gpio::{InterruptType, PinDriver, Pull};
+use esp_idf_svc::hal::task::notification::Notification;
+
+let mut button = PinDriver::input(peripherals.pins.gpio9)?; &#x2F;&#x2F; pin 9 is the onboard button on the M5 Stamp C3U
+button.set_pull(Pull::Up)?;
+button.set_interrupt_type(InterruptType::PosEdge)?;
+
+let notification = Notification::new();
+let notifier = notification.notifier();
+
+unsafe {
+    button
+        .subscribe(move || {
+            notifier.notify_and_yield(NonZeroU32::new(1).unwrap());
+        })?;
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Here we have created an interrupt that will notify when the button is pressed in this case on a Positive Edge (when the button is released).&lt;&#x2F;p&gt;
+&lt;p&gt;Now we can enable the interrupt and block until it is interrupt by someone pressing the button.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;loop {
+    button.enable_interrupt()?;
+    notification.wait(esp_idf_svc::hal::delay::BLOCK); &#x2F;&#x2F; code blocks until button interrupts
+    println!(&amp;quot;Button was pressed and released&amp;quot;);
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;We do this in a separate thread so it won&#x27;t block the rest&lt;&#x2F;p&gt;
+&lt;p&gt;The M5 Stamp that i&#x27;m using has an onboard multicolor led (SK6812 chip) attached to a gpio port, there is a rust library for that and other multicolor led, or ledstrips call &lt;code&gt;smart_leds&lt;&#x2F;code&gt;&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;rust&quot;&gt;use smart_leds_trait::{SmartLedsWrite, White};
+use ws2812_esp32_rmt_driver::driver::color::LedPixelColorGrbw32;
+use ws2812_esp32_rmt_driver::{LedPixelEsp32Rmt, RGBW8};
+
+fn main() -&amp;gt; Result {
+    let driver = LedPixelEsp32Rmt::&amp;lt;RGBW8, LedPixelColorGrbw32&amp;gt;::new(0, 2)?; &#x2F;&#x2F;Onboard led is attached to pin2
+    let red = RGBW8::from((255, 0, 0, White(0)));
+    let color = std::iter::repeat(red).take(1);
+    driver.write(color)?;
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;In the code linked at the bottom, I combined all the above in an application that runs on the ESP32-C3U and will cycle through all the charger states when the onboard button is pressed. showing the correct color on the onboard led and output the charger state in the console.&lt;&#x2F;p&gt;
+&lt;p&gt;Proving that you can run Rust on an ESP32, access the hardware and run code concurrently while being able to access shared objects.&lt;&#x2F;p&gt;
+&lt;p&gt;Thanks for reading, the next articles will most likely expand on this and be about:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Controlling a minimal hardware setup for a charger (Relay, Led, Button) based on the charger&#x27;s state&lt;&#x2F;li&gt;
+&lt;li&gt;Setup Wifi and MQTT to communicate with a backend, using the OCPP protocol&lt;&#x2F;li&gt;
+&lt;li&gt;Optionally: Control Pilot (CP) communications between the charger and the car over a Type2 Mennekes connector&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;references&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#references&quot; aria-label=&quot;Anchor link for: references&quot;&gt;References&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Code: https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;charger_rust_esp32_c3&#x2F;tree&#x2F;806cba4c933c5211d2c4f4759c223452b8426158&lt;&#x2F;li&gt;
+&lt;li&gt;esp-idf-template: https:&#x2F;&#x2F;github.com&#x2F;esp-rs&#x2F;esp-idf-template&lt;&#x2F;li&gt;
+&lt;li&gt;M5 Stamp ESP32-C3U: https:&#x2F;&#x2F;docs.m5stack.com&#x2F;en&#x2F;core&#x2F;stamp_c3u&lt;&#x2F;li&gt;
+&lt;li&gt;The embedded rust book:  https:&#x2F;&#x2F;docs.rust-embedded.org&#x2F;book&#x2F;&lt;&#x2F;li&gt;
+&lt;li&gt;Espresiff ESP-32: https:&#x2F;&#x2F;www.espressif.com&#x2F;en&#x2F;products&#x2F;socs&#x2F;esp32&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Redis Migration</title>
+        <published>2023-10-10T00:00:00+00:00</published>
+        <updated>2023-10-10T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/231010_redis_migration/"/>
+        <id>https://gertjanassies.dev/post/231010_redis_migration/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/231010_redis_migration/">&lt;p&gt;I&#x27;ve read about &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;dragonflydb.io&quot;&gt;dragonflydb&lt;&#x2F;a&gt;:&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Dragonfly is a drop-in Redis® replacement that is optimized for data-intensive, low latency applications. Applications built on Dragonfly get the full speed, reliability, and scalability that modern cloud hardware makes possible, allowing them to deliver incredible experiences to their users while reducing both costs and complexity.&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;so reading between all the marketing mumbo jumbo, it sounds like it&#x27;s really fast and could replace any redis instance.&lt;&#x2F;p&gt;
+&lt;p&gt;So as a small exercise  I decided to migrate this blog which uses redis to dragonflydb.&lt;&#x2F;p&gt;
+&lt;p&gt;For the migration I followed the practice of first continously replicating the data, and then switch the application to the new one, and it turned out to be pretty easy:&lt;&#x2F;p&gt;
+&lt;p&gt;Prerequisites: the old &lt;code&gt;redis-instance&lt;&#x2F;code&gt; and a fresh &lt;code&gt;dragonfly-instance&lt;&#x2F;code&gt; one and &lt;code&gt;redis-cli&lt;&#x2F;code&gt; installed.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;&amp;gt; redis-cli -h &amp;lt;dragonfly-instance&amp;gt; -p 6379
+
+# an empty db
+dragonfly-instance:6379&amp;gt; KEYS *
+(empty array)
+
+# with no replication
+dragonfly-instance:6379&amp;gt; INFO replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:68ffe35f52d262f9e86b7e14de8ee98020764bb6
+
+# turn on replication
+dragonfly-instance:6379&amp;gt; REPLICAOF &amp;lt;old redis-instance&amp;gt; 6379
+OK
+
+dragonfly-instance:6379&amp;gt; INFO replication
+# Replication
+role:replica
+master_host:&amp;lt;old redis-instance&amp;gt;
+master_port:6379
+master_link_status:up
+master_last_io_seconds_ago:1
+master_sync_in_progress:0
+
+# we now have all the data here
+dragonfly-instance:6379&amp;gt; KEYS *
+# shows all the migrated keys, but for obvious reasons I&amp;#39;ve omitted them
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now I stop and update the server to use the new instance&lt;&#x2F;p&gt;
+&lt;p&gt;now I turn off replication, this is needed as replica&#x27;s are read only.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;dragonfly-instance:6379&amp;gt; REPLICAOF NO ONE
+OK
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;And now start the application again.&lt;&#x2F;p&gt;
+&lt;p&gt;And that&#x27;s it, the blog is now using dragonflydb instead of redis.&lt;&#x2F;p&gt;
+&lt;p&gt;Now all is needed is to get those millions and millions of visitors to this blog. so i can reap the benefits of the speed of dragonflydb. &#x2F;s&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Implement page stats</title>
+        <published>2023-07-14T00:00:00+00:00</published>
+        <updated>2023-07-14T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/230714_implement_pageviews/"/>
+        <id>https://gertjanassies.dev/post/230714_implement_pageviews/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/230714_implement_pageviews/">&lt;p&gt;In a previous &lt;a href=&quot;&#x2F;post&#x2F;230627_new_blog&quot;&gt;blog&lt;&#x2F;a&gt; I talked about a blog I created with &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;kit.svelte.dev&quot;&gt;Sveltekit&lt;&#x2F;a&gt;
+and after I added some SEO related metadata. I wanted to see if it&#x27;s actually being found and read.&lt;&#x2F;p&gt;
+&lt;p&gt;I could of course just add google analytics or something similar, but I&#x27;m learning about Svelte and Typescript. so lets if we can implement a simple pageview counter, storing it in redis.
+which is a superfast key&#x2F;value database making it ideal for this kind of data.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;upstash.com&quot;&gt;Upstash&lt;&#x2F;a&gt; provides one free redis db when you signup and after creating a database, you can copy paste the connection string from the dashboard.&lt;&#x2F;p&gt;
+&lt;p&gt;Im using &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;redis&#x2F;ioredis&quot;&gt;ioredis&lt;&#x2F;a&gt;, the offical redis client written in typescript;&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;npm install -D ioredis
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Creating the client is a simple as creating a &lt;code&gt;new Redis(connection_string)&lt;&#x2F;code&gt;. In the case I populate the &lt;code&gt;REDIS_CONNECTION&lt;&#x2F;code&gt; env variable with the url from upstach&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;import Redis from &amp;#39;ioredis&amp;#39;;
+
+const connection = () =&amp;gt; {
+  let connection = process.env.REDIS_CONNECTION ?? &amp;quot;redis:&#x2F;&#x2F;localhost:6379&amp;quot;;
+  return new Redis(connection);
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Then I need a function to increment the pageview&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;import { dev } from &amp;#39;$app&#x2F;environment&amp;#39;;
+
+export const incrementPageView: (slug: string) =&amp;gt; Promise&amp;lt;number&amp;gt;  = async (slug: string) =&amp;gt; {
+  let prefix = &amp;quot;prod&amp;quot;;
+  if (dev) { prefix = &amp;quot;dev&amp;quot;; }
+ return await redis().incr(`${prefix}:post:${slug}:views`);
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;&lt;code&gt;incr(key: string)&lt;&#x2F;code&gt; creates the key with value 1 if it doesn&#x27;t exist, increments it otherwise and returns the updated value.&lt;&#x2F;p&gt;
+&lt;p&gt;I add an prefix to the key to differentiate between my dev environment and the &#x27;production&#x27; one. (only got one free db)&lt;&#x2F;p&gt;
+&lt;p&gt;now I want a page to list all the pageviews for that I need a function that returns all those&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;type PageView = {
+    slug: string;
+    views: number;
+}
+
+export const getPageViews: () =&amp;gt; Promise&amp;lt;PageView[]&amp;gt; = async () =&amp;gt; {
+  let prefix = &amp;quot;prod&amp;quot;;
+  if (dev) { prefix = &amp;quot;dev&amp;quot;; }
+
+  const keys = await connection().keys(`${prefix}:post:*:views`);
+
+  if (keys.length != 0) {
+    const views: string[] = (await redis().mget(...keys)).map((view) =&amp;gt; view ?? &amp;#39;0&amp;#39;);
+
+    return keys.map((key, index) =&amp;gt; {
+        return {
+            slug: key.split(&amp;#39;:&amp;#39;)[2],
+            views: parseInt(views[index])
+        }
+    });
+  } else {
+    return [];
+  }
+};
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;let&#x27;s go through this, Redis doesn&#x27;t have functionality to return a list of key&#x2F;values in one go, so first I have to get the keys&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;  const keys: string[] = await connection().keys(`${prefix}post:*:views`);
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;.. and then the values, Redis has the &lt;code&gt;mget&lt;&#x2F;code&gt; call where you specify multiple keys as arguments. &lt;code&gt;...&lt;&#x2F;code&gt; is the so called spread operator which transforms an array into a list of arguments.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;  const views: PageView[] = await redis().mget(...keys).map((view) =&amp;gt; view ?? &amp;#39;0&amp;#39;);
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;when a key doesn&#x27;t exists its return&#x27;s &lt;code&gt;null&lt;&#x2F;code&gt; for that key, so the result type for mget is &lt;code&gt;Promise&amp;lt;(string | null)[]&amp;gt;&lt;&#x2F;code&gt; where null should never happen as i&#x27;m getting the keys from the same data. to get to a &lt;code&gt;Promise&amp;lt;string[]&amp;gt;&lt;&#x2F;code&gt; type I just map null&#x27;s to &lt;code&gt;&#x27;0&#x27;&lt;&#x2F;code&gt; with the &lt;code&gt;??&lt;&#x2F;code&gt; operator. then I merge both the slug from the key and the views into the PageView[] result;&lt;&#x2F;p&gt;
+&lt;p&gt;In the end I only have to do 2 calls.&lt;&#x2F;p&gt;
+&lt;p&gt;one thing to remember is that the &lt;code&gt;keys()&lt;&#x2F;code&gt; method is blocking and goes over every key in your database, so for high traffic&#x2F;low latency applications you are better of using &lt;code&gt;scan()&lt;&#x2F;code&gt; which is not blocking but only returns a subset, meaning have to call it multiple times to get all the results. I might update my code to do this, but for the purpose of this blog it&#x27;s fine.&lt;&#x2F;p&gt;
+&lt;p&gt;So now what&#x27;s left is to call the &lt;code&gt;incrementPageviews()&lt;&#x2F;code&gt; method, in the server side load method that is called whenever a page is requested:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;import { incrementPageView } from &amp;#39;$lib&#x2F;server&#x2F;redis.ts&amp;#39;;
+
+export const load: PageServerLoad = async ({ params }) =&amp;gt; {
+  const { slug } = params;
+
+  ...
+
+  let pageviews = await incrementPageView(slug);
+
+  return {
+    ...,
+    pageviews: pageviews,
+  }
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;I also return the pageviews, so it can be displayed on the page somewhere if needed&lt;&#x2F;p&gt;
+&lt;p&gt;To show all pageviews  on a page I created a component:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;svelte&quot;&gt;&amp;lt;!-- &#x2F;src&#x2F;components&#x2F;PageView.svelte --&amp;gt;
+&amp;lt;script lang=&amp;quot;ts&amp;quot;&amp;gt;
+  import  type { PageView } from &amp;#39;$lib&#x2F;types&amp;#39;;
+
+  export let data: PageView[];
+  &#x2F;&#x2F; sort on number of page views
+  let sorted: PageView[] = data.sort((a, b) =&amp;gt; b.views - a.views);
+&amp;lt;&#x2F;script&amp;gt;
+
+
+{#if sorted.length === 0}
+  &amp;lt;p&amp;gt;No pageviews yet.&amp;lt;&#x2F;p&amp;gt;
+{:else}
+  &amp;lt;table class=&amp;quot;pageviews&amp;quot;&amp;gt;
+    &amp;lt;thead&amp;gt;
+      &amp;lt;tr&amp;gt;
+          &amp;lt;th&amp;gt;Page&amp;lt;&#x2F;th&amp;gt;
+          &amp;lt;th&amp;gt;Views&amp;lt;&#x2F;th&amp;gt;
+      &amp;lt;&#x2F;tr&amp;gt;
+    &amp;lt;&#x2F;thead&amp;gt;
+    &amp;lt;tbody&amp;gt;
+      {#each sorted as item}
+        &amp;lt;tr&amp;gt;
+          &amp;lt;td&amp;gt;{item.slug}&amp;lt;&#x2F;td&amp;gt;
+          &amp;lt;td class=&amp;quot;views&amp;quot;&amp;gt;{item.views}&amp;lt;&#x2F;td&amp;gt;
+        &amp;lt;&#x2F;tr&amp;gt;
+      {&#x2F;each}
+    &amp;lt;&#x2F;tbody&amp;gt;
+  &amp;lt;&#x2F;table&amp;gt;
+{&#x2F;if}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;and the page i&#x27;m using it in:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;&#x2F;&#x2F; &#x2F;stats&#x2F;+page.server.ts
+import type { PageServerLoad } from &amp;#39;.&#x2F;$types&amp;#39;;
+import { getPageViews } from &amp;#39;$lib&#x2F;server&#x2F;redis.ts&amp;#39;;
+
+export const load: PageServerLoad = (async () =&amp;gt; {
+    return {
+        pageviews: getPageViews(),
+    };
+  })
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;svelte&quot;&gt;&amp;lt;!-- &#x2F;stats&#x2F;+page.md --&amp;gt;
+&amp;lt;script lang=&amp;quot;ts&amp;quot;&amp;gt;
+  import PageViews from &amp;#39;$src&#x2F;components&#x2F;PageViews.svelte&amp;#39;
+
+  import type { PageData } from &amp;#39;.&#x2F;$types&amp;#39;;
+  export let data: PageData;
+&amp;lt;&#x2F;script&amp;gt;
+
+# Pageviews
+
+&amp;lt;PageViews data={data.pageviews} &#x2F;&amp;gt;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;further-steps&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#further-steps&quot; aria-label=&quot;Anchor link for: further-steps&quot;&gt;Further steps&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;I may want to implement some more functionality, calculate reading time, based on the nr of words. and then a metric to calculate the reading time.&lt;&#x2F;p&gt;
+&lt;p&gt;If I do the redis data is going to move to hashsets where the slug is a hash under which several sets of metrics can be stored.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Made a new Blog</title>
+        <published>2023-06-27T00:00:00+00:00</published>
+        <updated>2023-06-27T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/230627_new_blog/"/>
+        <id>https://gertjanassies.dev/post/230627_new_blog/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/230627_new_blog/">&lt;script lang=&quot;ts&quot;&gt;
+    import Tag from &#x27;$src&#x2F;components&#x2F;Tag.svelte&#x27;
+    import Mermaid from &#x27;$src&#x2F;components&#x2F;Mermaid.svelte&#x27;
+&lt;&#x2F;script&gt;
+&lt;h2 id=&quot;learning-experience&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#learning-experience&quot; aria-label=&quot;Anchor link for: learning-experience&quot;&gt;Learning experience&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;I wanted to learn more about creating web applications with &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;kit.svelte.dev&#x2F;docs&#x2F;introduction&quot;&gt;SvelteKit&lt;&#x2F;a&gt; (which consists of Svelte and Vite)&lt;&#x2F;p&gt;
+&lt;p&gt;so I decided to make a personal blog&lt;&#x2F;p&gt;
+&lt;p&gt;so what is &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;kit.svelte.dev&#x2F;&quot;&gt;Sveltekit&lt;&#x2F;a&gt;? (from the website)&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;SvelteKit is a framework for rapidly developing robust, performant web applications using Svelte. If you&#x27;re coming from React, SvelteKit is similar to Next. If you&#x27;re coming from Vue, SvelteKit is similar to Nuxt.&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;Sveltekit uses &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;svelte.dev&#x2F;&quot;&gt;Svelte&lt;&#x2F;a&gt; (an UI framework like react) and &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;vitejs.dev&#x2F;&quot;&gt;vite&lt;&#x2F;a&gt; (frontend tooling to help develop&#x2F;run locally, with automatic reloading and caching for fast development)
+and takes most of the configuration and routing away.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;markdown&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#markdown&quot; aria-label=&quot;Anchor link for: markdown&quot;&gt;Markdown&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Thanks to the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;mdsvex.pngwn.io&#x2F;&quot;&gt;mdsvex&lt;&#x2F;a&gt; pre-processer, I can keep writing my blogs and most pages in markdown where it is possible to embed Svelte Components in your markdown, for more interactivity.&lt;&#x2F;p&gt;
+&lt;p&gt;Mdsvex will pre-process the content to first render the markdown and then pass the result on to svelte to render all the components.&lt;&#x2F;p&gt;
+&lt;p&gt;for instance the content for the homepage looks like this:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;html&quot;&gt;&amp;lt;script&amp;gt;
+  import Posts from &amp;#39;$src&#x2F;components&#x2F;Posts.svelte&amp;#39;;
+&amp;lt;&#x2F;script&amp;gt;
+
+# Home page
+
+This is my personal space where I talk about technology, coding, the maker space and anything else that interests me.
+
+## Featured blogs
+
+
+
+## todo
+
+...
+
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;frontmatter&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#frontmatter&quot; aria-label=&quot;Anchor link for: frontmatter&quot;&gt;Frontmatter&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Frontmatter is a convention to put metadata at the top of your markdown blog, mdsvex supports that out of the box, so when it pre-processes your markdown page, it will add a metadata field which contains all that information.&lt;&#x2F;p&gt;
+&lt;p&gt;Here&#x27;s an example from this blog article:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;yaml&quot;&gt;---
+title: Made a new Blog
+date: &amp;quot;2023-06-27&amp;quot;
+author: Gertjan Assies
+summary: Learning about Svelte by making a blog
+tags: sveltekit, markdown, typescript, mermaid, mdsvex, featured
+category: code
+image: &amp;quot;&#x2F;content-images&#x2F;new_blog_top.jpg&amp;quot;
+published: true
+
+---
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;a-word-about-routing&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#a-word-about-routing&quot; aria-label=&quot;Anchor link for: a-word-about-routing&quot;&gt;A word about routing&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;This is how the content of the &lt;code&gt;&#x2F;src&#x2F;routes&lt;&#x2F;code&gt; directory looks, sveltekit automatically builds routes to the pages that start with +.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;.
+└── src
+    └── routes
+        ├── +error.svelte
+        ├── +layout.svelte
+        ├── +page.server.ts
+        ├── +page.svelte.md
+        ├── about
+        │   └── +page.md
+        └── blog
+            ├── +page.server.ts
+            ├── +page.svelte
+            └── [slug]
+                ├── +page.server.ts
+                ├── +page.svelte
+                └── +page.ts
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;For instance requesting &lt;code&gt;&#x2F;blog&#x2F;about&lt;&#x2F;code&gt; from the browser will render the &lt;code&gt;&#x2F;src&#x2F;routes&#x2F;blog&#x2F;about&#x2F;+page.md&lt;&#x2F;code&gt; page&lt;&#x2F;p&gt;
+&lt;p&gt;The &lt;code&gt;+error.svelte&lt;&#x2F;code&gt; is returned whenever there&#x27;s a 4xx&#x2F;5xx response.&lt;&#x2F;p&gt;
+&lt;p&gt;The &lt;code&gt;+layout.svelte&lt;&#x2F;code&gt; gets wrapped around all other pages.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;svelte&quot;&gt;&amp;lt;!-- src&#x2F;routes&#x2F;+layout.svelte --&amp;gt;
+&amp;lt;svelte:head&amp;gt;
+    &amp;lt;title&amp;gt;gertjan.assies.dev&amp;lt;&#x2F;title&amp;gt;
+&amp;lt;&#x2F;svelte:head&amp;gt;
+
+&amp;lt;Nav &#x2F;&amp;gt;
+
+&amp;lt;div class=&amp;quot;content&amp;quot;&amp;gt;
+    &amp;lt;main in:fade&amp;gt;
+        &amp;lt;slot&amp;gt;
+            &amp;lt;!-- content --&amp;gt;
+        &amp;lt;&#x2F;slot&amp;gt;
+    &amp;lt;&#x2F;main&amp;gt;
+&amp;lt;&#x2F;div&amp;gt;
+
+&amp;lt;Footer &#x2F;&amp;gt;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;where the Nav and Footer are components that will render the top and bottom part respectively and the content will replace the slot tag.&lt;&#x2F;p&gt;
+&lt;p&gt;It supports parameterized paths, so whenever a request comes in for &lt;code&gt;&#x2F;blog&#x2F;some_blog_article&lt;&#x2F;code&gt;. it will go to &lt;code&gt;&#x2F;blog&#x2F;[slug]&#x2F;+page*&lt;&#x2F;code&gt; with &lt;code&gt;{slug: &#x27;some_blog_article&#x27;}&lt;&#x2F;code&gt; as a parameter as you can see in the code below&lt;&#x2F;p&gt;
+&lt;p&gt;The order of which the files get executed is shown here, if there is a load() function in any of the .ts files, it will get executed.&lt;&#x2F;p&gt;
+&lt;Mermaid height=&quot;50&quot;&gt;
+flowchart LR
+    engine--&gt;page.server.ts--&gt;page.ts--&gt;page.svelte
+&lt;&#x2F;Mermaid&gt;
+&lt;p&gt;this also shows you you can embed &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;mermaid.js.org&#x2F;&quot;&gt;mermaid&lt;&#x2F;a&gt; diagrams in the blog pages&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;how-to-render-a-blog-article&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#how-to-render-a-blog-article&quot; aria-label=&quot;Anchor link for: how-to-render-a-blog-article&quot;&gt;How to render a blog article&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;so here&#x27;s some code that gets the list of posts in this blog&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;    &#x2F;&#x2F; $lib&#x2F;server&#x2F;posts.ts
+    type GlobEntry = {
+        metadata: MetaData;
+        default: unknown;
+    };
+
+    export type MetaData = {
+        title: number;
+        summary: string;
+        date: string;
+        author: string;
+        tags: string;
+        category: string;
+        image: string;
+        slug: string;
+    }
+
+    &#x2F;&#x2F; Get all posts and add metadata
+    export const posts: MetaData[] = Object.entries(
+        import.meta.glob&amp;lt;GlobEntry&amp;gt;(&amp;#39;&#x2F;src&#x2F;lib&#x2F;posts&#x2F;**&#x2F;*.md&amp;#39;, { eager: true }))
+            .map(([filepath, globEntry]) =&amp;gt; {
+                return {
+                ...globEntry.metadata,
+                slug: parse(filepath).name,
+                };
+            })
+            .sort((a, b) =&amp;gt; new Date(b.date).getTime() - new Date(a.date).getTime())
+
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;The meta.glob() function loads and pre-processes all the *.md files, and returns the path to the file and a globEntry which contains the parsed frontmatter metadata,&lt;&#x2F;p&gt;
+&lt;p&gt;I then get the slug from the filepath, so I can link to the post itself.&lt;&#x2F;p&gt;
+&lt;p&gt;As the functionality above is executed on the server (anything in $lib&#x2F;server is executed serverside) it is not directly available on the client side, so when we name the file +page.server.ts it also gets executed on the server. anything returned will be passed on to the load function in +page.ts (client-side)&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;&#x2F;&#x2F; &#x2F;blog&#x2F;[slug]&#x2F;+page.server.ts
+import { posts } from &amp;#39;$lib&#x2F;server&#x2F;posts&amp;#39;;
+import { error } from &amp;#39;@sveltejs&#x2F;kit&amp;#39;;
+import type { PageServerLoad } from &amp;#39;.&#x2F;$types&amp;#39;;
+
+&#x2F;&#x2F; params contains any parameterized value in the url path, in this case [slug]
+export const load: PageServerLoad = async ({ params }) =&amp;gt; {
+    const { slug } = params;
+
+    &#x2F;&#x2F; get post metadata
+    const post = posts.find((post) =&amp;gt; slug === post.slug);
+
+    if (!post) {
+        throw error(404, &amp;#39;Post not found&amp;#39;);
+    }
+
+    return {
+        post,
+    };
+};
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;and after that the load on client is called:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;typescript&quot;&gt;&#x2F;&#x2F; &#x2F;blog&#x2F;[slug]&#x2F;+page.ts
+import type { PageLoad } from &amp;#39;.&#x2F;$types&amp;#39;;
+
+&#x2F;&#x2F; data contains what&amp;#39;s returned from the server side load
+export const load: PageLoad = async ({ data }) =&amp;gt; {
+    const component = await import(`..&#x2F;..&#x2F;..&#x2F;lib&#x2F;posts&#x2F;${data.post.slug}.md`);
+
+    return {
+        post: data.post,
+        component: component.default,
+    };
+};
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;We get the markdown file as a component, and return it with the metadata, we call .default on the component to make sure it gets converted to commonJS to avoid things like &quot;unexpected token: require&quot; when svelte tries to parse it as an ES Module. this took me a while to figure out though.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;svelte&quot;&gt;&amp;lt;!-- &#x2F;blog&#x2F;[slug]&#x2F;+page.svelte --&amp;gt;
+&amp;lt;script lang=&amp;quot;ts&amp;quot;&amp;gt;
+    import type { PageData } from &amp;#39;.&#x2F;$types&amp;#39;;
+    export let data: PageData;
+&amp;lt;&#x2F;script&amp;gt;
+...
+&amp;lt;svelte:component this={data.component} &#x2F;&amp;gt;
+...
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;which will render the post correctly, it will even render any other svelte components you put in that file for instance in this blog I can use the Tag component to show a tag here:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;svelte&quot;&gt;&amp;lt;Tag path=&amp;quot;&#x2F;blog&amp;quot; type=&amp;quot;category&amp;quot; text=&amp;quot;code&amp;quot; &#x2F;&amp;gt;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;and here it is working: &lt;Tag path=&quot;&#x2F;blog&quot; type=&quot;category&quot; text=&quot;code&quot; &#x2F;&gt;  click on and it will take you to list of blogs that have the code category&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;deployment&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#deployment&quot; aria-label=&quot;Anchor link for: deployment&quot;&gt;Deployment&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;I decided to check out &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;render.com&quot;&gt;render.com&lt;&#x2F;a&gt; to deploy this blog and that was by far the best and easiest experience I&#x27;ve had so far&lt;&#x2F;p&gt;
+&lt;p&gt;All I had to do was&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Add a &lt;code&gt;Dockerfile&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Create a new webservice in render.com&lt;&#x2F;li&gt;
+&lt;li&gt;connect the repo&lt;&#x2F;li&gt;
+&lt;li&gt;Add A and CAA records to the dns&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th style=&quot;text-align: left&quot;&gt;DNS Entries&lt;&#x2F;th&gt;&lt;th&gt;&lt;&#x2F;th&gt;&lt;th&gt;&lt;&#x2F;th&gt;&lt;th&gt;&lt;&#x2F;th&gt;&lt;th&gt;&lt;&#x2F;th&gt;&lt;&#x2F;tr&gt;&lt;&#x2F;thead&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td style=&quot;text-align: left&quot;&gt;gertjanassies.dev.&lt;&#x2F;td&gt;&lt;td&gt;86400&lt;&#x2F;td&gt;&lt;td&gt;IN&lt;&#x2F;td&gt;&lt;td&gt;A&lt;&#x2F;td&gt;&lt;td&gt;216.24.57.1&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td style=&quot;text-align: left&quot;&gt;gertjanassies.dev.&lt;&#x2F;td&gt;&lt;td&gt;86400&lt;&#x2F;td&gt;&lt;td&gt;IN&lt;&#x2F;td&gt;&lt;td&gt;CAA&lt;&#x2F;td&gt;&lt;td&gt;0 issue &quot;letsencrypt.org&quot;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td style=&quot;text-align: left&quot;&gt;gertjanassies.dev.&lt;&#x2F;td&gt;&lt;td&gt;86400&lt;&#x2F;td&gt;&lt;td&gt;IN&lt;&#x2F;td&gt;&lt;td&gt;CAA&lt;&#x2F;td&gt;&lt;td&gt;0 issuewild &quot;letsencrypt.org&quot;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;&#x2F;tbody&gt;&lt;&#x2F;table&gt;
+&lt;p&gt;Render will automatically issue an SSL Certificate from the certificate authority mentioned in the CAA records and deploy the app on every commit pushed to the main branch of the repo&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;what-s-to-or-not-to-love&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#what-s-to-or-not-to-love&quot; aria-label=&quot;Anchor link for: what-s-to-or-not-to-love&quot;&gt;What&#x27;s to (or not to) love&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;As with most javascript&#x2F;typescript frameworks, it can all too quickly becomes a bit of a mess, although during the work I learned more and more at how it all works, so I revisited working but somewhat crappy code multiple times.&lt;&#x2F;p&gt;
+&lt;p&gt;So lets categorize that as a somewhat steep learning curve and my tendency to just start assembling the swedish furniture instead of reading the manual first.&lt;&#x2F;p&gt;
+&lt;p&gt;I think with the modular (components) setup, thought out defaults, and ability to run the component&#x27;s code on the server or client (or both) makes it a very powerful and flexible framework.&lt;&#x2F;p&gt;
+&lt;p&gt;Vite making developing a pleasure with it&#x27;s almost instantly refreshing pages everytime you press save. and Typescript making sure you&#x27;re component properties&#x2F;attributes can only hold the right stuff.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;references&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#references&quot; aria-label=&quot;Anchor link for: references&quot;&gt;References&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;gertjanassies.dev&quot;&gt;Blog code&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;kit.svelte.dev&quot;&gt;Sveltekit&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;Image attribution: The cover image is courtesy of &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;unsplash.com&#x2F;s&#x2F;photos&#x2F;jess-bailey&quot;&gt;Jess Bailey&lt;&#x2F;a&gt; on &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;unsplash.com&#x2F;&quot;&gt;unsplash&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>An opinionated terminal experience</title>
+        <published>2023-02-01T00:00:00+00:00</published>
+        <updated>2023-02-01T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/230201_an_opionated_terminal/"/>
+        <id>https://gertjanassies.dev/post/230201_an_opionated_terminal/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/230201_an_opionated_terminal/">&lt;p&gt;As I got a new work laptop (Macbook Pro M1) recently, I&#x27;ve recorded the steps I did to get it to behave as I want, and hopefully, be a little bit more productive. (I&#x27;m very aware of the delicate balance between spending time on being more productive and actually being productive)&lt;&#x2F;p&gt;
+&lt;p&gt;It all starts with &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;http:&#x2F;&#x2F;brew.sh&quot;&gt;homebrew&lt;&#x2F;a&gt;. as most of the other stuff is installed via brew.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;&#x2F;bin&#x2F;bash -c &amp;quot;$(curl -fsSL https:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;Homebrew&#x2F;install&#x2F;HEAD&#x2F;install.sh)&amp;quot;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now I install a font to use within the terminal, that works with the theme I&#x27;ll select later&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;brew tap homebrew&#x2F;cask-fonts
+brew install font-hack-nerd-font
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;This is the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;powerline&#x2F;fonts&quot;&gt;Powerline Hack font&lt;&#x2F;a&gt; but enhanced with font-awesome icons&lt;&#x2F;p&gt;
+&lt;p&gt;Now for the Terminal itself, I like &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;iterm2.com&quot;&gt;Iterm2&lt;&#x2F;a&gt; for its configurability and the fact that it can have a screen slide down from the top, much like the terminal in Quake.&lt;&#x2F;p&gt;
+&lt;p&gt;After installing, I go to the profiles sections and add a new profile, where I select “Full width, top of the screen in windows -&amp;gt; Style and enable a hotkey (in my case double-tap ctrl)
+And in both profiles, I set the font to &#x27;hack nerd font mono&#x27; and change the dark blue colour to a lighter one, as the darker one is hardly readable on a block background&lt;&#x2F;p&gt;
+&lt;p&gt;Now for the shell, I like &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;fishshell.com&quot;&gt;fish&lt;&#x2F;a&gt; and by installing the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;oh-my-fish&#x2F;oh-my-fish&quot;&gt;oh-my-fish&lt;&#x2F;a&gt; framework I can then add the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;oh-my-fish&#x2F;theme-agnoster&quot;&gt;agnoster&lt;&#x2F;a&gt; theme.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;brew install fish
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;curl https:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;oh-my-fish&#x2F;oh-my-fish&#x2F;master&#x2F;bin&#x2F;install | fish
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;omf install agnoster
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now I install lsd (ls deluxe) which gives me icons for filetypes and different shades of green depending on how old or new the files are the Hack Nerd font is needed here for the icons&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;brew install lsd
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;And I add the following aliases to the aliases.fish file in ~&#x2F;.config&#x2F;fish&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;alias ls=&amp;#39;lsd&amp;#39;
+alias ll=&amp;#39;lsd -la&amp;#39;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Then I install &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;fig.io&quot;&gt;fig&lt;&#x2F;a&gt; to have the best AI powered autocomplete there is&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;brew install fig
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;I also add some helper functions in fish to make life a bit easier, these are just a few examples, I have loads more&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;function mcd -d &amp;quot;make and change into directory&amp;quot;
+    set -l dir $argv\[1\]
+    mkdir -p $dir; and cd $dir
+end
+
+function reload -d &amp;quot;reload fish and omf&amp;quot;
+    echo &amp;quot;Reloading fish config&amp;quot;
+    source ~&#x2F;.config&#x2F;fish&#x2F;config.fish
+    echo &amp;quot;Reloading omf&amp;quot;
+    omf reload
+end
+
+function urlencode -d &amp;quot;URL Encode any arguments&amp;quot;
+  perl -MURI::Escape -le &amp;quot;print uri\_escape(&amp;#39;$argv&amp;#39;)&amp;quot;
+end
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;In the end it looks like this:&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;an_opinionated_terminal_1.png&quot; alt=&quot;terminal screenshot&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;Hopefully I showed you some things, that might make your commandline experience a bit more pleasurable.&lt;&#x2F;p&gt;
+&lt;p&gt;Attribution: Cover Photo by &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;unsplash.com&#x2F;@_javardh_001?utm_source=medium&amp;amp;utm_medium=referral&quot;&gt;Javardh&lt;&#x2F;a&gt; on &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;unsplash.com?utm_source=medium&amp;amp;utm_medium=referral&quot;&gt;Unsplash&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>How to use AWS services from EKS with fine-grained access control</title>
+        <published>2022-11-02T00:00:00+00:00</published>
+        <updated>2022-11-02T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/221102_eks_fine_grained_access/"/>
+        <id>https://gertjanassies.dev/post/221102_eks_fine_grained_access/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/221102_eks_fine_grained_access/">&lt;p&gt;At my company, where I am part of the SRE team, we are using &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;aws.amazon.com&#x2F;eks&#x2F;&quot;&gt;EKS&lt;&#x2F;a&gt; (Amazon&#x27;s managed Kubernetes service) to run our applications and services.
+We also use it to deploy those applications and services and increasingly serverless stacks with cloud formation or terraform.&lt;&#x2F;p&gt;
+&lt;p&gt;But how do we keep our systems secure and stable while allowing the dev teams to build, deploy, monitor and debug their applications as they see fit?&lt;&#x2F;p&gt;
+&lt;p&gt;Kubernetes has the concept of service accounts. these are k8s resources that allow other k8s resources like pods for instance to interact with k8s and external services.&lt;&#x2F;p&gt;
+&lt;p&gt;EKS allows you to bind those service accounts to IAM Roles allowing fine-grained control on what AWS Services a k8s resource can interact with.
+This is possible as EKS can authenticate by using an &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;docs.aws.amazon.com&#x2F;eks&#x2F;latest&#x2F;userguide&#x2F;enable-iam-roles-for-service-accounts.html&quot;&gt;OIDC Provider&lt;&#x2F;a&gt; (follow the link to see how that connects Service accounts and IAM Roles.)&lt;&#x2F;p&gt;
+&lt;p&gt;For us, this means we can give development teams the possibility to deploy their k8s deployments, cloud formation stacks and big data jobs through CI&#x2F;CD pipelines in their namespaces without having to give them extensive access to the AWS Console.&lt;&#x2F;p&gt;
+&lt;p&gt;How that all works in detail is for another blog entry, what I want to show here is that if you want to interact with AWS services from within your application or job, you need to be able to assume that role that is bound to that service account.&lt;&#x2F;p&gt;
+&lt;p&gt;The example I&#x27;m showing uses Python and the Boto3 library, but this should be possible in any language that has an AWS client library or SDK that support STS (Secure Token Service)&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;python&quot;&gt;import os
+import boto3
+
+role_arn = os.getenv(&amp;quot;AWS_ROLE_ARN&amp;quot;)
+
+web_identity_token = None
+with open(os.getenv(&amp;quot;AWS_WEB_IDENTITY_TOKEN_FILE&amp;quot;), &amp;#39;r&amp;#39;) as f:
+  web_identity_token = f.read()
+
+sts_client = boto3.client(&amp;quot;sts&amp;quot;)
+sts_role_resp = sts_client.assume_role_with_web_identity(
+                  RoleArn=role_arn,
+                  RoleSessionName=&amp;quot;My Session&amp;quot;,
+                  WebIdentityToken=web_identity_token
+                )
+
+sts_role_creds = {
+  &amp;quot;AccessKeyId&amp;quot;: sts_role_resp[&amp;#39;Credentials&amp;#39;][&amp;#39;AccessKeyId&amp;#39;],
+  &amp;quot;SecretAccessKey&amp;quot;: sts_role_resp[&amp;#39;Credentials&amp;#39;][&amp;#39;SecretAccessKey&amp;#39;],
+  &amp;quot;SessionToken&amp;quot;: sts_role_resp[&amp;#39;Credentials&amp;#39;][&amp;#39;SessionToken&amp;#39;]
+}
+
+# code here that does whatever you need doing, that the role you assume allows you to
+# in this case list all s3 bucket names
+s3_resource=boto3.resource(&amp;#39;s3&amp;#39;,
+    aws_access_key_id=sts_role_creds[&amp;#39;AccessKeyId&amp;#39;],
+    aws_secret_access_key=sts_role_creds[&amp;#39;SecretAccessKey&amp;#39;],
+    aws_session_token=sts_role_creds[&amp;#39;SessionToken&amp;#39;],
+)
+
+for bucket in s3_resource.buckets.all():
+    print(bucket.name)
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;As you can see once the service account role bindings are set up the following environment variables are available:&lt;&#x2F;p&gt;
+&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;ENV var&lt;&#x2F;th&gt;&lt;th&gt;description&lt;&#x2F;th&gt;&lt;&#x2F;tr&gt;&lt;&#x2F;thead&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;AWS_ROLE_ARN&lt;&#x2F;td&gt;&lt;td&gt;The Role to assume&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;AWS_WEB_IDENTITY_TOKEN_FILE&lt;&#x2F;td&gt;&lt;td&gt;the file location containing a token to authenticate against&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;&#x2F;tbody&gt;&lt;&#x2F;table&gt;
+&lt;p&gt;Hopefully, I&#x27;ve given you some ideas on how to run AWS workloads in EKS.&lt;&#x2F;p&gt;
+&lt;p&gt;Thanks for reading.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>All those online meetings - Part 3</title>
+        <published>2022-09-18T00:00:00+00:00</published>
+        <updated>2022-09-18T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/220918_online_meetings3/"/>
+        <id>https://gertjanassies.dev/post/220918_online_meetings3/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/220918_online_meetings3/">&lt;h2 id=&quot;wrapping-it-up-in-a-case-actually&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#wrapping-it-up-in-a-case-actually&quot; aria-label=&quot;Anchor link for: wrapping-it-up-in-a-case-actually&quot;&gt;Wrapping it up, in a case actually&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;In the previous two blogs, I explained the idea and execution of a small device that would allow me to mute&#x2F;unmute audio&#x2F;video and raise a hand in video calls with hangouts, zoom or teams.
+Here are the links to both previous articles&lt;&#x2F;p&gt;
+&lt;p&gt;Part 1: &lt;a href=&quot;&#x2F;post&#x2F;210619_online_meetings&quot;&gt;All those online meetings - Part 1&lt;&#x2F;a&gt;
+Part 2: &lt;a href=&quot;&#x2F;post&#x2F;220801_online_meetings2&quot;&gt;All those online meetings - Part 2&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;So it was working, and I was actually using it, but it was just a PCB (printed circuit board) laying on my desk. so I started thinking about creating a case for it. here&#x27;s a picture of the PCB in its latest revision.
+the Link in the references will take you to this board on Aisler&#x27;s website.&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings3_1.png&quot; alt=&quot;PCB&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;I wanted the electronics to be visible so something transparent, which also would benefit from seeing the small OLED display I&#x27;ve added in the meantime.
+So I decided to make the top and bottom 2 mm Acrylic.&lt;&#x2F;p&gt;
+&lt;p&gt;so let&#x27;s spin up Fusion360. this is by far the best 3D CAD design tool I&#x27;ve worked with, and it is free for personal use (the link in the references takes you to the “for personal use” page), you do have to go through some hoops every year when that personal license expires.&lt;&#x2F;p&gt;
+&lt;p&gt;From the PCB design in &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.kicad.org&#x2F;&quot;&gt;Kicad&lt;&#x2F;a&gt;, I exported the edges of the board, the drill holes in the corner as well as the edges of all the switches as a DXF file and imported that into Fusion360, now most designs in Fusion360 start with a 2D sketch.&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings3_2.png&quot; alt=&quot;Sketch&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;Which you then can extrude into the 3D shape required. and that allowed me to create the sides of the case. I extruded the sketch above two times, once with a height of 2mm for the part under the PCB and once with a height of 7mm for the part above the PCB.
+making an opening for the USB connector was nothing more than creating a box a little bigger than the USB plug and then subtracting it from the shape of the case. the result is shown here, both the top and bottom are already in their correct position, and you can imagine the PCB fitting in between them.&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings3_3.png&quot; alt=&quot;3D Model for the sides&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;3D model for printing the sides of the case&lt;&#x2F;p&gt;
+&lt;p&gt;I also uploaded a slightly different version of that exported dxf file to the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;http:&#x2F;&#x2F;www.laserlokaal.nl&quot;&gt;website&lt;&#x2F;a&gt; of a company that would laser-cut the top and bottom acrylic for me.&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings3_4.png&quot; alt=&quot;lasercut dxf design&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;The featured picture is a rendering done within Fusion360, all the 3D models for the electronic parts were found on grabcad.com except for the 3-way switch, but from the part shop I bought the part from, there was a possibility to render a CAD model for that part.
+Fusion360 also can do animations. so here is one for an exploding view, which really shows you how it all fits together:&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings3_5.gif&quot; alt=&quot;Exploding view animation&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;So what did it all cost me?&lt;&#x2F;p&gt;
+&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Item&lt;&#x2F;th&gt;&lt;th&gt;Qnty&lt;&#x2F;th&gt;&lt;th&gt;Price&lt;&#x2F;th&gt;&lt;th&gt;Remarks&lt;&#x2F;th&gt;&lt;&#x2F;tr&gt;&lt;&#x2F;thead&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;PCB&lt;&#x2F;td&gt;&lt;td&gt;1&lt;&#x2F;td&gt;&lt;td&gt;€5.58&lt;&#x2F;td&gt;&lt;td&gt;Aisler (minimum order 3)&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;Acryl top+bottom&lt;&#x2F;td&gt;&lt;td&gt;1&lt;&#x2F;td&gt;&lt;td&gt;€12.30&lt;&#x2F;td&gt;&lt;td&gt;Laserlokaal&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;3D Print top+bot sides&lt;&#x2F;td&gt;&lt;td&gt;1&lt;&#x2F;td&gt;&lt;td&gt;€0.29&lt;&#x2F;td&gt;&lt;td&gt;(Filament cost)&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;RPI Pico RP2040&lt;&#x2F;td&gt;&lt;td&gt;1&lt;&#x2F;td&gt;&lt;td&gt;€2.20&lt;&#x2F;td&gt;&lt;td&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;SSD1306&lt;&#x2F;td&gt;&lt;td&gt;1&lt;&#x2F;td&gt;&lt;td&gt;€2.20&lt;&#x2F;td&gt;&lt;td&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;MX Keys&lt;&#x2F;td&gt;&lt;td&gt;3&lt;&#x2F;td&gt;&lt;td&gt;€3.03&lt;&#x2F;td&gt;&lt;td&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;Switch&lt;&#x2F;td&gt;&lt;td&gt;1&lt;&#x2F;td&gt;&lt;td&gt;€0.65&lt;&#x2F;td&gt;&lt;td&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;Key caps&lt;&#x2F;td&gt;&lt;td&gt;3&lt;&#x2F;td&gt;&lt;td&gt;€3.35&lt;&#x2F;td&gt;&lt;td&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;M2x4 self tapping&lt;&#x2F;td&gt;&lt;td&gt;4&lt;&#x2F;td&gt;&lt;td&gt;€0.07&lt;&#x2F;td&gt;&lt;td&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;M2x8 self tapping&lt;&#x2F;td&gt;&lt;td&gt;4&lt;&#x2F;td&gt;&lt;td&gt;€0.07&lt;&#x2F;td&gt;&lt;td&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;&#x2F;tbody&gt;&lt;&#x2F;table&gt;
+&lt;p&gt;Total                        &lt;strong&gt;€29.81&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;All in all, I very much enjoyed this little project, for all the details, design files and source code go have a look at the repo:
+&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;conference-buttons&quot;&gt;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;conference-buttons&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;How to program the board for the OLED display is something for another blog.&lt;&#x2F;p&gt;
+&lt;p&gt;Hope you enjoyed it and maybe even inspired you.
+Let me know if you have any questions or improvements.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;references&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#references&quot; aria-label=&quot;Anchor link for: references&quot;&gt;References&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;http:&#x2F;&#x2F;www.kicad.org&quot;&gt;Kicad&lt;&#x2F;a&gt; (Schematic and PCB Design)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;aisler.net&#x2F;p&#x2F;HXAFRBPY&quot;&gt;Aisler&lt;&#x2F;a&gt; (online PCB Manufacturing)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;http:&#x2F;&#x2F;www.laserlokaal.nl&quot;&gt;Laser Lokaal&lt;&#x2F;a&gt; (online Laser cutting&#x2F;engraving)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.autodesk.com&#x2F;products&#x2F;fusion-360&#x2F;personal&quot;&gt;Fusion360&lt;&#x2F;a&gt; (Information about how to get a free personal license)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;grabcad.com&#x2F;library&quot;&gt;Grabcad&lt;&#x2F;a&gt; (Community sharing lots of 3D Models)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;conference-buttons&quot;&gt;Gitlab Repo&lt;&#x2F;a&gt; (Contains Everything described here, Code, design files, etc)&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Smaller docker containers</title>
+        <published>2022-08-13T00:00:00+00:00</published>
+        <updated>2022-08-13T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/210813_smaller_docker_containers/"/>
+        <id>https://gertjanassies.dev/post/210813_smaller_docker_containers/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/210813_smaller_docker_containers/">&lt;p&gt;In the company where I work as a Site Reliability Engineer, we currently have around 60k devices in the field, we are expected to scale that to half a million by 2025. and they all need to communicate with our back-office which consists of a whole bunch of containerized microservices.
+This means for everything that we do, we have to ask ourselves the age-old question:&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;does it scale?&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;and when it does, how can we make sure the costs do not scale faster than the resources we need.
+One thing to help with that is to make sure our docker containers are as small as possible.
+This will also help in other areas, less software running means less things can crash and a significantly smaller attack surface, so stability and security will increase too, Hoorah!&lt;&#x2F;p&gt;
+&lt;p&gt;The example I&#x27;m going to expand upon works with a small go application but could be applied to almost any language that compiles to a native application.&lt;&#x2F;p&gt;
+&lt;p&gt;If you want to dive into the code first, here&#x27;s the repo: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;tinyweb&quot;&gt;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;tinyweb&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;something-to-test-with&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#something-to-test-with&quot; aria-label=&quot;Anchor link for: something-to-test-with&quot;&gt;Something to test with&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The infamous hello world application here is done with the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;echo.labstack.com&#x2F;&quot;&gt;echo&lt;&#x2F;a&gt; web framework just to have something I can verify working from within the container.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;go&quot;&gt;package main
+import (
+  &amp;quot;net&#x2F;http&amp;quot;
+  &amp;quot;github.com&#x2F;labstack&#x2F;echo&#x2F;v4&amp;quot;
+  &amp;quot;github.com&#x2F;labstack&#x2F;echo&#x2F;v4&#x2F;middleware&amp;quot;
+)
+func main() {
+  e := echo.New()
+  e.Use(middleware.Logger())
+  e.GET(&amp;quot;&#x2F;&amp;quot;, hello)
+  e.Logger.Fatal(e.Start(&amp;quot;:8000&amp;quot;))
+}
+
+func hello(c echo.Context) error {
+  return c.String(http.StatusOK, &amp;quot;Hello, World!&amp;quot;)
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;build-a-normal-docker-container-for-your-app&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#build-a-normal-docker-container-for-your-app&quot; aria-label=&quot;Anchor link for: build-a-normal-docker-container-for-your-app&quot;&gt;Build a normal docker container for your app&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;docker&quot;&gt;FROM golang:1.16
+RUN mkdir -p &#x2F;app
+COPY main.go &#x2F;app
+COPY go.\* &#x2F;app
+WORKDIR &#x2F;app
+RUN CGO\_ENABLED=0 GOOS=linux go build -o service main.go
+EXPOSE 8000
+CMD \[&amp;quot;&#x2F;app&#x2F;service&amp;quot;\]
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;To set a baseline, I&#x27;m just creating a docker image from the golang:1.16 base-image, copy over the sources and compile them.&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Image size: 968 Mb (968212150) almost a Gb!&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;h2 id=&quot;a-multistage-docker-image&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#a-multistage-docker-image&quot; aria-label=&quot;Anchor link for: a-multistage-docker-image&quot;&gt;A multistage docker image&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;docker&quot;&gt;FROM golang:1.16 AS builderCOPY main.go &#x2F;app
+COPY go.\* &#x2F;app
+WORKDIR &#x2F;app
+RUN CGO\_ENABLED=0 GOOS=linux go build -o dist&#x2F;service main.go
+ADD https:&#x2F;&#x2F;github.com&#x2F;krallin&#x2F;tini&#x2F;releases&#x2F;download&#x2F;v0.19.0&#x2F;tini-static &#x2F;tini
+RUN chmod +x &#x2F;tini
+
+FROM scratch
+COPY --from=builder &#x2F;app&#x2F;dist&#x2F;service &#x2F;service
+COPY --from=builder &#x2F;tini &#x2F;tini
+EXPOSE 8000
+ENTRYPOINT [&amp;quot;&#x2F;tini&amp;quot;, &amp;quot;--&amp;quot;]
+CMD [&amp;quot;&#x2F;service&amp;quot;]
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Here I&#x27;m doing a multistage build, still using the Golang image to build the application but then in the second stage, I copy over the compiled application to a base image called scratch.
+&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;hub.docker.com&#x2F;_&#x2F;scratch&#x2F;&quot;&gt;Scratch&lt;&#x2F;a&gt; is a special base image which you cannot pull or download, but it is basically a completely empty container to start with.&lt;&#x2F;p&gt;
+&lt;p&gt;As it is empty it also does not contain an init system which normally runs on Linux systems and serves as the root process (PID 1) for all other processes, making sure the right signals are sent to the right process, zombie processes are cleared up etc.
+&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;krallin&#x2F;tini&quot;&gt;Tini&lt;&#x2F;a&gt; is a small init system for containers. this way the application thinks it&#x27;s running in a ‘normal&#x27; Linux system.&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Image size: 8.8 Mb (8799493)&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;h2 id=&quot;remove-debug-info&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#remove-debug-info&quot; aria-label=&quot;Anchor link for: remove-debug-info&quot;&gt;Remove debug info&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;with the -s -w ldflags you can tell the compiler to not put any debug information in the binary. (for production systems it would be prudent to also create an image with the debug information in case you need to fix an urgent issue)&lt;&#x2F;p&gt;
+&lt;p&gt;The Docker file is the same as above except for the following line&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;docker&quot;&gt;RUN CGO\_ENABLED=0 GOOS=linux go build **\-ldflags=&amp;quot;-s -w&amp;quot;** -o dist&#x2F;service main.go
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Image size: 6.5 Mb (6559840)&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;h2 id=&quot;compress-binary-with-upx&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#compress-binary-with-upx&quot; aria-label=&quot;Anchor link for: compress-binary-with-upx&quot;&gt;Compress binary with UPX&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;upx.github.io&#x2F;&quot;&gt;UPX&lt;&#x2F;a&gt; is a tool that compresses executables.&lt;&#x2F;p&gt;
+&lt;p&gt;after the compile step in the build stage, the following will download and execute upx on the freshly build application.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;docker&quot;&gt;ADD https:&#x2F;&#x2F;github.com&#x2F;upx&#x2F;upx&#x2F;releases&#x2F;download&#x2F;v3.96&#x2F;upx-3.96-amd64\_linux.tar.xz upx-3.96-amd64\_linux.tar.xz
+RUN tar -xf upx-3.96-amd64\_linux.tar.xz
+RUN mv upx-3.96-amd64\_linux&#x2F;upx .
+RUN .&#x2F;upx --brute &#x2F;app&#x2F;dist&#x2F;service
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Resulting Image size: 2.6 Mb (2567632)&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;h2 id=&quot;conclusion&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#conclusion&quot; aria-label=&quot;Anchor link for: conclusion&quot;&gt;Conclusion&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;to summarize the images created with their sizes&lt;&#x2F;p&gt;
+&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Image&lt;&#x2F;th&gt;&lt;th style=&quot;text-align: center&quot;&gt;Debug info&lt;&#x2F;th&gt;&lt;th style=&quot;text-align: center&quot;&gt;UPX compression&lt;&#x2F;th&gt;&lt;th&gt;Size&lt;&#x2F;th&gt;&lt;th&gt;Percentage&lt;&#x2F;th&gt;&lt;&#x2F;tr&gt;&lt;&#x2F;thead&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;golang&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: center&quot;&gt;yes&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: center&quot;&gt;no&lt;&#x2F;td&gt;&lt;td&gt;968212150&lt;&#x2F;td&gt;&lt;td&gt;100.00%&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;scratch&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: center&quot;&gt;yes&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: center&quot;&gt;no&lt;&#x2F;td&gt;&lt;td&gt;8799493&lt;&#x2F;td&gt;&lt;td&gt;0.91%&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;scratch&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: center&quot;&gt;no&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: center&quot;&gt;no&lt;&#x2F;td&gt;&lt;td&gt;6559840&lt;&#x2F;td&gt;&lt;td&gt;0.68%&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;scratch&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: center&quot;&gt;no&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: center&quot;&gt;yes&lt;&#x2F;td&gt;&lt;td&gt;2567632&lt;&#x2F;td&gt;&lt;td&gt;0.27%&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;&#x2F;tbody&gt;&lt;&#x2F;table&gt;
+&lt;p&gt;We managed to get the image size down to 0.27% of the original which is a lot! Most of the gain was in using the scratch image, which avoided having a complete Linux system installed there.
+Multi-stage builds make it possible to have an image with all the tools needed to build your app and then just copy over the built application to an image that only has the minimum needed to run your application.&lt;&#x2F;p&gt;
+&lt;p&gt;So I hope I&#x27;ve shown you to always try to create the minimal image you need to run your application.&lt;&#x2F;p&gt;
+&lt;p&gt;I used the following to determine the image sizes:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;&amp;gt; docker inspect -f &amp;quot;{{ .Size }}&amp;quot; gertjana&#x2F;tinyweb:tiniest
+2567632
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;references&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#references&quot; aria-label=&quot;Anchor link for: references&quot;&gt;References&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;tinyweb&quot;&gt;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;tinyweb&lt;&#x2F;a&gt;
+where all the shown code lives&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;hub.docker.com&#x2F;_&#x2F;scratch&#x2F;&quot;&gt;https:&#x2F;&#x2F;hub.docker.com&#x2F;_&#x2F;scratch&#x2F;&lt;&#x2F;a&gt;
+Info about the scratch base-image&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;echo.labstack.com&#x2F;&quot;&gt;https:&#x2F;&#x2F;echo.labstack.com&#x2F;&lt;&#x2F;a&gt;
+minimalistic high-performance web framework&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;krallin&#x2F;tini&quot;&gt;https:&#x2F;&#x2F;github.com&#x2F;krallin&#x2F;tini&lt;&#x2F;a&gt;
+a small but valid ini t system&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;upx.github.io&#x2F;&quot;&gt;https:&#x2F;&#x2F;upx.github.io&#x2F;&lt;&#x2F;a&gt;
+a free, portable, extendable, high-performance executable packer&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;image-attribution&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#image-attribution&quot; aria-label=&quot;Anchor link for: image-attribution&quot;&gt;Image attribution&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;courtesy &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;unsplash.com&#x2F;@guibolduc&quot;&gt;https:&#x2F;&#x2F;unsplash.com&#x2F;@guibolduc&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>All those online meetings - part 2</title>
+        <published>2022-08-01T00:00:00+00:00</published>
+        <updated>2022-08-01T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/220801_online_meetings2/"/>
+        <id>https://gertjanassies.dev/post/220801_online_meetings2/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/220801_online_meetings2/">&lt;p&gt;A while ago I blogged about a small project with a Raspberry Pi Pico and a couple of buttons to make a tool that could help me in all those online meetings when we all had to work from home during Covid.&lt;&#x2F;p&gt;
+&lt;p&gt;I&#x27;m just explaining the changes here, so If you want to get the full picture, please read the first part of the article:
+&lt;a href=&quot;&#x2F;post&#x2F;210619_online_meetings&quot;&gt;All those online meetings - part 1&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;Now it works pretty well but there were some improvements to be made&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;I needed one of the buttons to do a &quot;raise hand&quot;&lt;&#x2F;li&gt;
+&lt;li&gt;Because of that I needed another way to switch between Hangouts&#x2F;Teams&#x2F;Zoom&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;A 3-way slider switch should do the trick, now my schematic looks like this (power comes from the USB connector):&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings2_1.png&quot; alt=&quot;Schematic&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;All I need is a change in the code to check GPIO13, 14 and 15 and whichever one is 0&#x2F;false&#x2F;low I had to set the keymap for the right conference tool.
+Because I configured the GPIO ports to use a pull-up resistor an open switch will be 1 (resistor pulls the input to the + Voltage) and closing the switch will pull it to 0 (ground) with the resistor protecting it from shortening out.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;python&quot;&gt;switch = [board.GP13, board.GP14, board.GP15]
+for s in range(3):
+    switch[s] = DigitalInOut(switch[s])
+    switch[s].direction = Direction.Input
+    switch[s].pull = Pull.Up
+
+keymap = {}
+keymap_teams    = { (0): (KeyCode.CONTROL, KeyCode.SHIFT, KeyCode.M),
+                    (1): (KeyCode.CONTROL, KeyCode.SHIFT, KeyCode.O),
+                    (2): (KeyCode.CONTROL, KeyCode.SHIFT, KeyCode.K)}
+keymap_zoom     = { (0): (KeyCode.CONTROL, KeyCode.SHIFT, KeyCode.A),
+                    (1): (KeyCode.GUI, KeyCode.SHIFT, KeyCode.V),
+                    (2): (KeyCode.GUI, KeyCode.Y)}
+keymap_hangouts = { (0): (KeyCode.ALT, KeyCode.D),
+                    (1): (KeyCode.GUI, KeyCode.E),
+                    (2): (KeyCode.GUI, KeyCode.CONTROL, KeyCode.H)}
+
+def get_keymap():
+    if not switch[0].value:
+        return keymap_teams
+    if not switch[1].value:
+        return keymap_zoom
+    if not switch[2].value:
+        return keymap_hangouts
+
+keymaps = get_keymap()
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now about the hardware, the first version was done with Fritzing which is a nice enough tool. but it has some peculiarities, that make it hard to get right.
+So for this one, I used &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.kicad.org&#x2F;&quot;&gt;KiCad 6&lt;&#x2F;a&gt; and I must say it has evolved a lot since I first started using it ages ago.&lt;&#x2F;p&gt;
+&lt;p&gt;One thing with Electronic design software is always having the right part libraries and KiCad delivers here. I&#x27;m using Cherry MX keys that I have lying around. and those are fully supported. For the Raspberry Pi Pico board, a quick google revealed a &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;ncarandini&#x2F;KiCad-RP-Pico&quot;&gt;GitHub repo&lt;&#x2F;a&gt;f with the part and PCB footprint&lt;&#x2F;p&gt;
+&lt;p&gt;The switch part took a bit longer, I had already ordered and received the switch, but it wasn&#x27;t in the library, fortunately, its little brother a 2-way switch was. as you can see in the screenshot&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings2_3.png&quot; alt=&quot;PCB_key_2way&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;Now the switch I had looked exactly the same but it had one more pin and some more spacing.
+So in KiCad&#x27;s footprint editor, I copied the one above. saw that the pad spacing was 2 mm. so I could move on off the outer pins to the left and duplicate one of the other pins. update the pin numbers in the properties to match up with the 3-way switch schematic part. and for completeness updated the silkscreen mask and part number.&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings2_4.png&quot; alt=&quot;PCB_key_3way&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;Now I have all the parts that I need, in the schematic, I assigned all the footprints to the relevant parts and after satisfying the Electrical Rules Checker I clicked Update PCB from Schematic.&lt;&#x2F;p&gt;
+&lt;p&gt;Now in the PCB editor it&#x27;s just placing the components and routing everything but the GND on the top layer. and then creating a ground plane for the GND net on the bottom layer.
+I had to make one via to get the GND from the raspberry pi board which will be soldered on top to the bottom layer and part of the ground plane.
+Running the Design Rule Checker revealed some warnings but overall it was happy with my design.&lt;&#x2F;p&gt;
+&lt;p&gt;Here&#x27;s the end result:&lt;&#x2F;p&gt;
+&lt;p&gt;Last time I ordered the PCB boards from &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;aisler.net&#x2F;&quot;&gt;Aisler&lt;&#x2F;a&gt;. and I found out that they have a plugin for KiCad, which makes it super easy to upload the PCB to Aisler (one click) and from there. a quick check, going over all the settings, the defaults were good enough. and pressing the produce button. and then waiting a week or so. I had to pay around 15 Euro. which is a really good value for the quality they deliver.&lt;&#x2F;p&gt;
+&lt;p&gt;I&#x27;m very impressed with KiCad, of course having used other electronic design tools in the past (Ultiboard, Eagle. Fritzing) made it a bit easier. but I felt like KiCad had the most gradual learning curve of them all.
+I managed to create the schematic, PCB and extra footprint in about 3 hours.&lt;&#x2F;p&gt;
+&lt;p&gt;All the code and designs are here: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;conference-buttons&quot;&gt;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;conference-buttons&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;Thanks for reading. and hopefully, I inspired you to start doing your own little projects.&lt;&#x2F;p&gt;
+&lt;p&gt;next steps: Create a 3D printed case for it…. &lt;em&gt;is firing up Fusion360&lt;&#x2F;em&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;Continueing in Part 3:
+&lt;a href=&quot;&#x2F;post&#x2F;220918_online_meetings3&quot;&gt;All those online meetings - Part 3&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>An Optional type in Go - an experiment</title>
+        <published>2022-05-28T00:00:00+00:00</published>
+        <updated>2022-05-28T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/220528_optional_go/"/>
+        <id>https://gertjanassies.dev/post/220528_optional_go/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/220528_optional_go/">&lt;p&gt;A common pattern in Go is to have your function return an error next to the result to signify a failure inside the function like so:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;go&quot;&gt;func Divide(a float64, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New(&amp;quot;Divide by zero, really?&amp;quot;)
+    }
+    return a&#x2F;b
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;What if we could capture this in a Type with a couple of methods like so:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;go&quot;&gt;package optional
+
+Type Maybe[T] struct {
+    Value T
+    Error error
+}
+
+type Optional interface {
+    New()       &#x2F;&#x2F; Constructor
+    Failed()    &#x2F;&#x2F; true if Error
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Then our Divide function can become:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;go&quot;&gt;func Divide(a float64, b float64) Maybe[float64] {
+    if b == 0 {
+        return optional.New(Value: 0, Error: errors.New(&amp;quot;Divide by zero, really?&amp;quot;))
+    }
+}
+
+maybeDivived := Divide(2,4)
+if maybeDivided.Failed() {
+    fmt.Printf(&amp;quot;Divide failed with %v&amp;quot;, maybeDivided.Error)
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now this is even more verbose then the original example, that&#x27;s not improving on the situation. So lets try to implement a Map, where we can apply a function on the Value inside the Maybe and return a Maybe with the result of the function.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;go&quot;&gt;func Map[S any, T any](m Maybe[S], f func(S) (T, error)) Maybe[T] {
+    if m.Error != nil {
+        var unit T
+        return New(unit, m.Error)
+    } else {
+        r, err := f(m.Value)
+        return New(R, err)
+    }
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;So here we take a:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Maybe[S] and unwrap the S&lt;&#x2F;li&gt;
+&lt;li&gt;apply a function from S -&amp;gt; T on the inside Value&lt;&#x2F;li&gt;
+&lt;li&gt;wrap again and return the Maybe[T]&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;When there&#x27;s an Error in the Maybe[S], I return a Maybe[T] with an uninitialized var of type T (which is kinda the Nothing type in Go, if you don&#x27;t look too closely) and the error, if not I&#x27;m executing the function and returning the result with any error that might have happened in that function&lt;&#x2F;p&gt;
+&lt;p&gt;So now running:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;go&quot;&gt;maybe := New(&amp;quot;2022-05-27T12:24:00Z&amp;quot;, nil)
+f := func(date string) (time.Time, error) {
+    return time.Parse(time.RFC3339, date)
+} &#x2F;&#x2F; returns a func(string) (time.Time, error)
+result := Map(maybe,f) &#x2F;&#x2F; returns a Maybe[time.Time]
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Will parse the string as a time.Time and handle the error when the string cannot be parsed, OK this is becoming a little more useful.&lt;&#x2F;p&gt;
+&lt;p&gt;But what if I want to chain a bunch of functions together that all could potentially give an error. Let&#x27;s implement a let&#x27;s call it `AndThen` function&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;go&quot;&gt;func (m Maybe[T]) AndThen(f func (T) (T, error)) Maybe[T] {
+    return Map(m, f)
+}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;As you can see AndThen is just a Map function. but now it applies to the struct&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;go&quot;&gt;addOne := func (x int) (int, error) { return x+1, nil }
+multThree := func (x int) (int, error) { return x*3, nil }
+
+maybe := New(42, nil)
+
+res := maybe.
+        andThen(addOne).
+        andThen(multThree).
+        Value
+&#x2F;&#x2F; 129
+
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Unfortunately I couldn&#x27;t get the AndThen to work with different input and result types. maybe someone more familiar with Go Generics can explain to me how that is done, if at all possible.&lt;&#x2F;p&gt;
+&lt;p&gt;Here I come to the conclusion that the chainable AndThen functionality is actually useful. especially when it&#x27;s possible to use different types for in- and output.&lt;&#x2F;p&gt;
+&lt;p&gt;But I&#x27;m also coming to the conclusion, that implementing a pure functional library in Go is maybe not a good idea, as the language is not really suited for that. and that&#x27;s fine. go learn yourself a bit of Haskell if you want that.
+The number of abandoned &#x27;experiments&#x27; I found on public repo&#x27;s also attested to this&lt;&#x2F;p&gt;
+&lt;p&gt;All the code used is in this repo: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;optional-go&#x2F;-&#x2F;blob&#x2F;main&#x2F;cmd&#x2F;optional&#x2F;optional.go&quot;&gt;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;optional-go&#x2F;-&#x2F;blob&#x2F;main&#x2F;cmd&#x2F;optional&#x2F;optional.go&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;Hope you learnt something, I did&lt;&#x2F;p&gt;
+&lt;p&gt;UPDATE:&lt;&#x2F;p&gt;
+&lt;p&gt;It is indeed not possible to have the AndThen method on the Maybe with a function with different types, as all the types you use need to be defined on the Maybe.&lt;&#x2F;p&gt;
+&lt;p&gt;Maybe there is a way to mimic union types with interfaces and get it working like that, but that&#x27;s something for a new experiment.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>why I sold my van Moof bike</title>
+        <published>2021-11-05T00:00:00+00:00</published>
+        <updated>2021-11-05T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/211105_why_i_sold_my_vanmoof/"/>
+        <id>https://gertjanassies.dev/post/211105_why_i_sold_my_vanmoof/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/211105_why_i_sold_my_vanmoof/">&lt;p&gt;&lt;em&gt;But don&#x27;t get me wrong, I love Van Moof bikes.&lt;&#x2F;em&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;They are an absolute joy to behold and ride, from speeding away when the traffic light goes green holding the power-boost button to cruising at around 30 km&#x2F;h by cycling to the maximum and then just peddling a bit slower, so it&#x27;s hardly any effort.&lt;&#x2F;p&gt;
+&lt;p&gt;I first got the Electrified S at the end of 2018 which I used for my daily commute (~20km there and 20km back) and after riding it for almost 10.000km with half-yearly maintenance check-up&#x27;s it was well worth the 3000 euro price tag. I manage to sell it with some old-age issues for a couple of hundred and the buyer paid a few more for repairs but then he still had a nice bike for a third of the price of a new one.&lt;&#x2F;p&gt;
+&lt;p&gt;Then I bought an S3, besides having to wait 4 months for it to get delivered, there were problems with it from the start, specifically with the automatic gears and the “kicker” (the button on the rear axle that locks the bike and turns on the alarm), great feature, if it works.&lt;&#x2F;p&gt;
+&lt;p&gt;At that point in time you could still reach Van Moof by phone but getting your bike repaired means:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Call them and be on hold for at least half an hour&lt;&#x2F;li&gt;
+&lt;li&gt;getting a drop-off appointment around a week later&lt;&#x2F;li&gt;
+&lt;li&gt;turning the steer 90 degrees so it would fit in my car, driving 45 min. through the centre of Amsterdam to get to the store, turn the steer back and drop it off.&lt;&#x2F;li&gt;
+&lt;li&gt;Pick it up &#x27;4- 5 workdays later&#x27;&lt;&#x2F;li&gt;
+&lt;li&gt;Within a week discovering the problem wasn&#x27;t fixed&lt;&#x2F;li&gt;
+&lt;li&gt;rinse and repeat, again not able to use the bike for another 2 weeks&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;After the third time this happened in as many months. I told them that I wasn&#x27;t convinced doing this exercise a fourth time would yield a different result, they then offered to replace the bike with a new one.&lt;&#x2F;p&gt;
+&lt;p&gt;Which again, great service, but having to wait 6 weeks again to pick up the new bike. The kicker on the new bike only worked like 50% of the time, but I couldn&#x27;t be bothered to have it repaired anymore as I rarely left the bike in public.&lt;&#x2F;p&gt;
+&lt;p&gt;So for about half a year I could enjoying cycling to and from work and some longer distances in the weekend. (around 2000 km) and then something broke again, different errorcodes in the screen all indicating a problem with the battery. so here we go again.&lt;&#x2F;p&gt;
+&lt;p&gt;Van Moof no longer has a phone number to call, only a chat option in the website. and after a while somebody answered, and said after hearing the issue, to bring it into the store for repair, only now the first option is in 2 weeks, and then the 5 working days, so I&#x27;m out of a bike again for 3 weeks.&lt;&#x2F;p&gt;
+&lt;p&gt;A month later, same problem, errorcodes indicating battery issues. again 3 weeks without a bike. I found out after the second repair they put a second hand refurbished battery in. which seemed odd for a bike that is still under warranty.&lt;&#x2F;p&gt;
+&lt;p&gt;But at that point I had already made the decision to sell the bike once I got it back.
+Luckily the bikes are so popular, people were overbidding each other so I could sell it close to the buying price.&lt;&#x2F;p&gt;
+&lt;p&gt;I now ride a bike that has similar performance for a similar price, but it&#x27;s a more established brand with better proven technology.
+I do miss the power-boost button though.&lt;&#x2F;p&gt;
+&lt;p&gt;I think the lesson to learn here is that you can have a great brand, great market strategy and a friendly costumer service but if the quality is not there, in the end that doesn&#x27;t matter anymore as you would have lost those customers.&lt;&#x2F;p&gt;
+&lt;p&gt;Although I still love the brand. It&#x27;s going to take some hard convincing on van Moof&#x27;s part to get me to buy a new one but I have to say that seeing the new V got me hesitating again..&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;update-12-july-2023&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#update-12-july-2023&quot; aria-label=&quot;Anchor link for: update-12-july-2023&quot;&gt;UPDATE 12 July 2023&lt;&#x2F;a&gt;&lt;&#x2F;h3&gt;
+&lt;p&gt;In the news today, vanMoof had to request to deferral of payments, usually the last step before they declare bankruptcy, unfortunately they didn&#x27;t get the quality up to par, but they kept selling bikes, I see them everywhere in Amsterdam and Amstelveen.
+I do feel sorry, as the bike was unique with some great innovative technology. hopefully someone will invest for a restart, getting service and maintenance costs down should be prio one then.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>SSH - too many authentication failures</title>
+        <published>2021-10-29T00:00:00+00:00</published>
+        <updated>2021-10-29T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/211029_too_many_authenticating_failures/"/>
+        <id>https://gertjanassies.dev/post/211029_too_many_authenticating_failures/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/211029_too_many_authenticating_failures/">&lt;p&gt;One morning I tried to login into a remote system using ssh and suddenly I got the above error.
+It took me a bit of time to figure out what the problem was.&lt;&#x2F;p&gt;
+&lt;p&gt;I&#x27;m writing this here so that it might save someone some time in the future.&lt;&#x2F;p&gt;
+&lt;p&gt;It turned out I had too many keys added to my ssh-agent and by default, the ssh client will offer all of those to the server until one passes.&lt;&#x2F;p&gt;
+&lt;p&gt;If then the number of keys added exceeds the maximum allowed authentication failures on the server, you will get this error.&lt;&#x2F;p&gt;
+&lt;p&gt;There are several ways to fix this:
+Firstly the IdentitiesOnly option which will only use the identities passed on the command line or in the config ignoring the ones from the agent.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;&amp;gt; ssh -o IdentitiesOnly=yes &amp;lt;server&amp;gt;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;This allowed my finish my task and then I started thinking of better options to manage my keys on the variety of hosts I need to connect to.&lt;&#x2F;p&gt;
+&lt;p&gt;This can be easily done using the ssh-config first of all I can make the IdentitiesOnly=yes default for all hosts and then add specific keys for specific hosts, my &lt;code&gt;~&#x2F;.ssh&#x2F;config&lt;&#x2F;code&gt; now looks a little bit like this&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;Host server-a
+  HostName server-a.company.com
+  IdentityFile ~&#x2F;.ssh&#x2F;id_rsa_server-a
+Host server-b
+  HostName server-b.company.com
+  IdentityFile ~&#x2F;.ssh&#x2F;id_rsa_server-b
+Host *
+  Compression yes
+  IdentitiesOnly yes
+  LogLevel=INFO
+  PreferredAuthentications publickey
+  Protocol 2
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;So no I don&#x27;t need to add them to the agent anymore and I have fine-grained control over how I connect to different servers.&lt;&#x2F;p&gt;
+&lt;p&gt;As ssh stops scanning after it found a match make sure the Host * is the last entry in the list.&lt;&#x2F;p&gt;
+&lt;p&gt;If you want more information on all the options you can do&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;man ssh-config
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;or if you prefer online documentation &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.ssh.com&#x2F;academy&#x2F;ssh&#x2F;config&quot;&gt;https:&#x2F;&#x2F;www.ssh.com&#x2F;academy&#x2F;ssh&#x2F;config&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>All those online meetings - part 1</title>
+        <published>2021-06-19T00:00:00+00:00</published>
+        <updated>2021-06-19T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/210619_online_meetings/"/>
+        <id>https://gertjanassies.dev/post/210619_online_meetings/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/210619_online_meetings/">&lt;p&gt;&lt;em&gt;Or how to find an excuse to play with a Raspberry Pico.&lt;&#x2F;em&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;While on a not particularly interesting online meeting, my eye fell on the &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.raspberrypi.org&#x2F;products&#x2F;raspberry-pi-pico&#x2F;&quot;&gt;Raspberry Pico&lt;&#x2F;a&gt; that I ordered and had just arrived that morning.
+After more than a year working from home, I got into the habit to mute my audio when I&#x27;m not speaking and in large meetings or perceived bandwidth issues, I disable my video. enabling both again when I need to speak.&lt;&#x2F;p&gt;
+&lt;p&gt;Now, what if I could add a couple of buttons to the Pico to make those tasks a little easier.&lt;&#x2F;p&gt;
+&lt;p&gt;Add another button to switch between hangouts&#x2F;zoom&#x2F;teams and I should be good to go. thus making the pico into a 3 button keyboard.&lt;&#x2F;p&gt;
+&lt;p&gt;The Pico or more specifically the RP2040 is a $4 microcontroller board that features a dual-core Arm Cortex-M0+ processor with 264KB internal RAM and support for up to 16MB of off-chip Flash. I2C, SPI, and programmable I&#x2F;O. making it more than suitable for this small project.&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings_1.png&quot; alt=&quot;RP2040 pinlayout&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;A quick search on the internet revealed an &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;circuitpython.readthedocs.io&#x2F;projects&#x2F;hid&#x2F;en&#x2F;latest&#x2F;&quot;&gt;AdaFruit library&lt;&#x2F;a&gt; that would turn the Pico into an HID (Human Interface Device) which would make it a keyboard when plugged in the USB port. that library also came with a &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;learn.adafruit.com&#x2F;diy-pico-mechanical-keyboard-with-fritzing-circuitpython&#x2F;overview&quot;&gt;tutorial&lt;&#x2F;a&gt; for a 21-key keyboard, which I used extensively in this little project. (no point in inventing the wheel again)&lt;&#x2F;p&gt;
+&lt;p&gt;The tutorial also contains custom parts for the RP2040 and the Cherry MX buttons to be used in &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;fritzing.org&#x2F;&quot;&gt;Fritzing&lt;&#x2F;a&gt;, a simple tool to create schematics and PCB&#x27;s.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;hardware&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#hardware&quot; aria-label=&quot;Anchor link for: hardware&quot;&gt;Hardware&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings_2.png&quot; alt=&quot;Schematic&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;So simply adding 3 switches to 3 GPIO ports, in the software, we can define them as input with the internal pull-up resistor which will make them work correctly.&lt;&#x2F;p&gt;
+&lt;p&gt;Switching to the PCB view in Fritzing, placing the components and routing the switches to the pico and creating a copper fill for the ground connections resulted in the following PCB:&lt;&#x2F;p&gt;
+&lt;Image path=&quot;&#x2F;content-images&#x2F;online_meetings_3.png&quot; alt=&quot;PCB&quot; thumbnail_width=&quot;600&quot; &#x2F;&gt;
+&lt;p&gt;Fritzing also supports exporting to Gerber files. which u can use to create your PCB&#x27;s or order them online. this process could not be easier, upload the Gerber files, visually check them online and press the order button.&lt;&#x2F;p&gt;
+&lt;p&gt;I used &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;oshpark.com&#x2F;&quot;&gt;OSHPark&lt;&#x2F;a&gt; for the first batch (you need to order a minimum of 3 PCB&#x27;s), they deliver a great product, but it takes around a month to manufacture and ship from the US to the Netherlands, costs were around $25 which is not bad.
+For the second batch, I&#x27;m trying out &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;aisler.net&#x2F;&quot;&gt;Aisler&lt;&#x2F;a&gt;, which originates in Germany, and is cheaper (12 euro for 3 boards) and should be here in less than 2 weeks.&lt;&#x2F;p&gt;
+&lt;p&gt;To program the Pico with Micropython, it always consists of resetting it with the bootsel button pressed which will make it show up as a removable drive on your system then copy&#x2F;drag over the necessary files and that it, details are in the adafruit tutorial I&#x27;ve linked above and in the references.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;software&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#software&quot; aria-label=&quot;Anchor link for: software&quot;&gt;Software&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;All the software, design files can be found here:
+&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;conference-buttons&quot;&gt;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;conference-buttons&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;I&#x27;m using &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;codewith.mu&#x2F;&quot;&gt;Mu Editor&lt;&#x2F;a&gt;, it&#x27;s not the best editor, but it supports the Pico board and the circuit python bootloader to directly program on the Pico.&lt;&#x2F;p&gt;
+&lt;p&gt;One thing in the code I want to highlight to show the versatility of the Pico:
+to be able to use the GPIO&#x27;s as seen in the schematic, they need to be set up as inputs with pull-up resistors&lt;&#x2F;p&gt;
+&lt;p&gt;This allows you to program almost every pin, as digital in or out, analog, PWM, I2C, SPI, UART, making it very versatile to many use cases.&lt;&#x2F;p&gt;
+&lt;p&gt;The rest of the code just loops forever, scanning the keys 10x a second and when pressed lookup the correct keyboard shortcut to send over the USB connection.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;conclusion&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#conclusion&quot; aria-label=&quot;Anchor link for: conclusion&quot;&gt;Conclusion&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;This approach demonstrated here (with the help of the good people at Adafruit) lends itself to creating custom keyboards for all kinds of situations, up to complete cockpits for flight simulators or other game-specific keyboards.&lt;&#x2F;p&gt;
+&lt;p&gt;The Raspberry Pi Foundation clearly has a winner here, a very cheap versatile microcontroller with the power of the dual-core Arm M0 and good support from a lot of manufacturers like Adafruit and others making it an in my eyes one of the best options out there for small DIY projects and education purposes.
+I can&#x27;t wait to have my niece and nephew solder one together for their online school lessons, as I have still 2 of the 3 boards left.&lt;&#x2F;p&gt;
+&lt;p&gt;Continued in Part 2: &lt;a href=&quot;&#x2F;post&#x2F;220801_online_meetings2&quot;&gt;All those online meetings - part 2&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;references&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#references&quot; aria-label=&quot;Anchor link for: references&quot;&gt;References&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.raspberrypi.org&#x2F;products&#x2F;raspberry-pi-pico&#x2F;&quot;&gt;Raspberry Pico RP2040&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;circuitpython.org&#x2F;libraries&quot;&gt;Adafruit CircuitPython and HID Library bundle&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;learn.adafruit.com&#x2F;diy-pico-mechanical-keyboard-with-fritzing-circuitpython&#x2F;overview&quot;&gt;Adafuit custom keyboard tutorial&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;fritzing.org&#x2F;&quot;&gt;Fritzing opensource schematic and PCB designer&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;codewith.mu&#x2F;&quot;&gt;Mu Python Editor&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;conference-buttons&quot;&gt;Source and Fritzing schematic and PCB Files&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;aisler.net&#x2F;p&#x2F;KHQPFARM&quot;&gt;PCB&#x27;s in Aisler&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>TOTP Exercise</title>
+        <published>2021-06-10T00:00:00+00:00</published>
+        <updated>2021-06-10T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/210610_TOTP_Exercise/"/>
+        <id>https://gertjanassies.dev/post/210610_TOTP_Exercise/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/210610_TOTP_Exercise/">&lt;p&gt;TOTP stands for &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;en.wikipedia.org&#x2F;wiki&#x2F;Time-based_One-Time_Password&quot;&gt;Time-based One Time Password&lt;&#x2F;a&gt; and is an algorithm that most MFA (&lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;en.wikipedia.org&#x2F;wiki&#x2F;Multi-factor_authentication&quot;&gt;Multi-Factor Authentication&lt;&#x2F;a&gt;) devices use&lt;&#x2F;p&gt;
+&lt;p&gt;for obvious security reasons, I have set up MFA on all accounts that support it. but this can be a bit cumbersome in some situations.&lt;&#x2F;p&gt;
+&lt;p&gt;Especially when you are working with Serverless applications on AWS. I work a lot with Cloudformation and SAM but that does mean that during the day I&#x27;ll be typing in MFA codes a lot.&lt;&#x2F;p&gt;
+&lt;p&gt;As an exercise, I wanted to see if I could get those codes visible without having to resort to the Google Authenticator app.&lt;&#x2F;p&gt;
+&lt;p&gt;What if I could have that code show up in the touch bar on my mac.
+I know, I know MFA needs to be another device! so a disclaimer:&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;What is described below will lower the security of your system and your accounts: do so at your own risk!&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;but if I would do this, at least I would need to do the following:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;use sudo to enable it and disable it automatically after a certain amount of time.&lt;&#x2F;li&gt;
+&lt;li&gt;only shows it in the touch bar after pressing a secret key combination.&lt;&#x2F;li&gt;
+&lt;li&gt;store any secrets in the keychain.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;I&#x27;m already using a tool called &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;folivora.ai&#x2F;&quot;&gt;BetterTouchTool&lt;&#x2F;a&gt; that allows customisation of the touch bar on my mac.&lt;&#x2F;p&gt;
+&lt;p&gt;so first of all how do we get that code?&lt;&#x2F;p&gt;
+&lt;p&gt;Whenever you add an application to for instance Google Authenticator, you have to scan a QR Code. this QR Code contains a secret if you would scan that with a normal QR code scanner you will get this URL with a secret param: (the account and secret are replaced by placeholders here)&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;otpauth:&#x2F;&#x2F;totp&#x2F;Amazon%20Web%20Services:\[account\]?secret=\[secret\]&amp;amp;issuer=Amazon%20Web%20Services
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now here you can see that it uses TOTP (Timebase One Time Password) which is an extension to HOTP (HMAC-Based One Time Password)&lt;&#x2F;p&gt;
+&lt;p&gt;to summarize really quickly:&lt;&#x2F;p&gt;
+&lt;p&gt;HOTP uses a hash algorithm to create a digest from the secret and a counter) TOTP introduces a time-based component for the counter (the counter is x second (default is 30) steps counted from the epoch)&lt;&#x2F;p&gt;
+&lt;p&gt;Now Python has an &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;pyauth&#x2F;pyotp&quot;&gt;OTP library&lt;&#x2F;a&gt; that can create the MFA code from that secret.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;python&quot;&gt;#!&#x2F;usr&#x2F;bin&#x2F;env python3import pyotp
+import syssecret = sys.argv\[1\]
+totp = pyotp.TOTP(secret)
+print(totp.now())
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;This will when you give it a secret return the 6 digit code&lt;&#x2F;p&gt;
+&lt;p&gt;To not have the secret in my scripts I&#x27;ve added it to the keychain with&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;security add-generic-password -a \[account\] -s totp-exercise -w \[secret\]
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;and retrieve it again in a bash script&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;#!&#x2F;bin&#x2F;bash
+me=\`whoami\`
+secret=\`security find-generic-password -a $me -s totp-exercise -w\`
+echo \`python3 \[path\]&#x2F;get\_code.py $secret\`
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;so now I have something I can call from BetterTouchTool:&lt;&#x2F;p&gt;
+&lt;p&gt;In BetterTouchTool you can create a button (widget) and then run an AppleScript when started and another one when you press the button, you can also define a key combination to only show it when pressed.&lt;&#x2F;p&gt;
+&lt;p&gt;so when starting it It will run this AppleScript: it will execute the script and set the text property with the result to have it shown as the button text&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;applescript&quot;&gt;set code to do shell script &amp;quot;&#x2F;Users&#x2F;\[account\]&#x2F;btt\_scripts&#x2F;code\_aws.sh&amp;quot;
+return &amp;quot;{\\&amp;quot;text\\&amp;quot;:\\&amp;quot;&amp;quot; &amp;amp; code &amp;amp; &amp;quot;\\&amp;quot;}&amp;quot;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;when pressed it gets the latest code again but now put the code on the clipboard&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;applescript&quot;&gt;set code to do shell script &amp;quot;&#x2F;Users&#x2F;\[account\]&#x2F;btt\_scripts&#x2F;code\_aws.sh&amp;quot;
+set the clipboard to code as text
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;To conclude with the pytotp library it is trivial to build your own google authenticator application.&lt;&#x2F;p&gt;
+&lt;p&gt;Now that I&#x27;ve &quot;proofed the concept&quot; I will remove it again!&lt;&#x2F;p&gt;
+&lt;p&gt;And focus on getting this to run on an embedded device, for instance on an &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;m5stack.com&#x2F;&quot;&gt;M5 Stack&lt;&#x2F;a&gt; which has an ESP32 controller and a screen. although this will probably mean I have to port the python library to C, as I haven&#x27;t found any libraries that work with the AWS secret, just some abandoned projects that tried to do the same.
+But that&#x27;s another story&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Practical recursion in Elixir</title>
+        <published>2021-06-09T00:00:00+00:00</published>
+        <updated>2021-06-09T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/210609_practical_recursion_in_elixir/"/>
+        <id>https://gertjanassies.dev/post/210609_practical_recursion_in_elixir/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/210609_practical_recursion_in_elixir/">&lt;p&gt;Usually, when the new year starts, a lot of people are starting their &quot;new years resolutions&quot;, which usually are things like exercise more, eat healthier, which non-quantitive nature are easy to postpone or avoid, therefore I rather set goals.&lt;&#x2F;p&gt;
+&lt;p&gt;I have an electric bike that keeps track of the total km&#x27;s cycled, in 2018 I cycled ~5000 km, in 2019 ~3000 km, so a downward trend was showing.&lt;&#x2F;p&gt;
+&lt;p&gt;One of my (modest) goals for 2020 is to cycle at least 4000km which is around 80 km a week (my daily commute is around 35km), so if I cycle to work at 2 to 3 times a week, I will make it easily.&lt;&#x2F;p&gt;
+&lt;p&gt;Now to help keep track, I wrote a small command-line tool, that allows me to enter the current kilometres, and predict using linear trend analysis where it would end up at the end of the year.&lt;&#x2F;p&gt;
+&lt;p&gt;Linear trend analysis takes the average change between measurements and then apply that average to a future value $x$. In formula form this is&lt;&#x2F;p&gt;
+&lt;p&gt;$$ \frac{\frac{v_x-v_n}{t_x-t_n}}{1} = \frac{\frac{v_1-v_0}{t_1-t_0} + \frac{v_2-v_1}{t_2-t_1} \dots \frac{v_n-v_{n-1}}{t_n-t_{n-1}}}{n}
+$$&lt;&#x2F;p&gt;
+&lt;p&gt;or .. the average of all the previous points (0 to n) is equal to the average of the last value (n) and the future value (x) divided by the number of days from the last value to that future date.&lt;&#x2F;p&gt;
+&lt;p&gt;so what we need is a recursive function that does this part:&lt;&#x2F;p&gt;
+&lt;p&gt;$$ \frac{v_1-v_0}{t_1-t_0} + \frac{v_2-v_1}{t_2-t_1} \dots \frac{v_n-v_{n-1}}{t_n-t_{n-1}}
+$$&lt;&#x2F;p&gt;
+&lt;p&gt;I store it as a JSON data structure, so a simple map with dates and km values&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;elixir&quot;&gt;%{&amp;quot;2020-01-01&amp;quot; =&amp;gt; 8091, &amp;quot;2020-01-10&amp;quot; =&amp;gt; 8119, &amp;quot;2020-01-13&amp;quot; =&amp;gt; 8166, &amp;quot;2020-01-16&amp;quot; =&amp;gt; 8197}
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Which gets translated as a list of structs as sorting on the date is needed&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;elixir&quot;&gt;deltas = loop([], nil, measurements)
+
+  defp loop(acc, prev, list) do
+    case list do
+      [] -&amp;gt; acc
+      [head | tail] when prev == nil -&amp;gt; loop(acc, head, tail)
+      [head | tail] -&amp;gt;
+        delta = (head.value - prev.value) &#x2F; diff_string_date(prev.date, head.date)
+        loop([delta | acc], head, tail)
+    end
+  end
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;We start with an empty accumulator, no previous value and the list of km&#x27;s cycled&lt;&#x2F;li&gt;
+&lt;li&gt;when we don&#x27;t have a previous value, we call ourselves with the head of the list as the previous value and the tail as the list&lt;&#x2F;li&gt;
+&lt;li&gt;when we have a previous value we calculate the average km&#x2F;days between the previous and the head of the list, add it to the accumulator and call ourselves again with the head as the previous value and the tail&lt;&#x2F;li&gt;
+&lt;li&gt;when we call it with an empty list we return the accumulator (exit condition)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;A big thing in recursion is tail-recursive or tail-call optimization.&lt;&#x2F;p&gt;
+&lt;p&gt;Normally when you call function B from function A the current state of function A will be put on the stack end retrieved again when Function B returns, except when the call to function B is the last thing function A does. then it only has to return the result of function B&lt;&#x2F;p&gt;
+&lt;p&gt;When calling a recursive function with a large list, this could cause the stack to grow beyond its memory allowance and crash your application, solving this is called &#x27;Tail call optimization&#x27; and just means we need to make sure the recursive call is the last statement in the function.&lt;&#x2F;p&gt;
+&lt;p&gt;We can see from the code that we call ourselves from 2 places, so how can we optimize this loop to be tail call optimized?&lt;&#x2F;p&gt;
+&lt;p&gt;As the only thing this function does is pattern match on a list and Elixir also support pattern matching on function arguments we can rewrite this loop as several functions where the arguments vary as they did in the case statement.&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;elixir&quot;&gt;deltas = loop([], nil, measurements)
+
+defp loop(acc, _, []), do: acc
+defp loop(acc, nil, [head | tail]), do: loop(acc, head, tail)
+defp loop(acc, prev, [head | tail]) do
+  diff = (head.value - prev.value) &#x2F; diff_string_date(prev.date, head.date)
+  loop([diff | acc], head, tail)
+end
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;You can see we only call ourselves as the last statement, yeah, we&#x27;re tail call optimized and the compiler will take it from here.&lt;&#x2F;p&gt;
+&lt;p&gt;Then all its left is calculating the average of the deltas and multiply it with the number of days from the last measurement to the 31st of December and we are there&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;bash&quot;&gt;~&amp;gt;.&#x2F;van_moofing trend 2020
+With a average of 4.33 km a day and 13 days till the end of the year,
+you will probably cycle another 56.0 km in 2020 for a grand total of 10163.0 km
+
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;So I did not reach my goal of 4000 km in 2020 (12.000 km total).
+The fact that I worked from home since march due to Covid19 might have something to do with that.&lt;&#x2F;p&gt;
+&lt;p&gt;BTW: I used the excellent &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;hex.pm&#x2F;packages&#x2F;ex_cli&quot;&gt;ex_cli&lt;&#x2F;a&gt; library for creating a command-line app, with argument parsing&lt;&#x2F;p&gt;
+&lt;p&gt;The total application source code can be found here: &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;van_moofings&quot;&gt;https:&#x2F;&#x2F;gitlab.com&#x2F;gertjana&#x2F;van_moofings&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+</feed>
