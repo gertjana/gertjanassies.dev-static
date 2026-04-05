@@ -30,7 +30,7 @@
 {% endblock og %}
 
 {% block extra_head %}
-{% if page.extra.math %}
+{% if page.extra.features is defined and "math" in page.extra.features %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous" />
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
@@ -60,13 +60,6 @@
 }
 </script>
 {% endblock extra_head %}
-
-{% block twitter_card %}summary_large_image{% endblock twitter_card %}
-{% block twitter_title %}{{ page.title }}{% endblock twitter_title %}
-{% block twitter_description %}{{ page.description | default(value=config.description) }}{% endblock twitter_description %}
-{% block twitter_image %}
-{% if page.extra.image %}{{ config.base_url }}{{ page.extra.image }}{% else %}{{ config.base_url }}/logo_ga.svg{% endif %}
-{% endblock twitter_image %}
 
 {% block og_url %}{{ page.permalink }}{% endblock og_url %}
 {% block canonical %}{{ page.permalink }}{% endblock canonical %}
