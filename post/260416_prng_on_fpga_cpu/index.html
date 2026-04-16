@@ -167,8 +167,8 @@
       <div class="post-markdown-content">
         <h2 id="the-cpu-project"><a class="zola-anchor" href="#the-cpu-project" aria-label="Anchor link for: the-cpu-project">The CPU Project</a></h2>
 <p>As I wrote about <a href="/post/260310_ai_in_electronics_design">previously</a>, I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga">cpu_in_fpga</a> is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.</p>
-<p>I wanted the programs you can run on it, to do something (the functional programmer in me would says It needs to have side effects)
-Typically this is done through dedicated <code>IN</code> and <code>OUT</code> instructions. where the program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO port, an Analog Digital Converter, the 8 LED's on the board)</p>
+<p>I wanted the programs you can run on it: "to do something" (the functional programmer in me would says It needs to have side effects)</p>
+<p>Typically this is done through dedicated <code>IN</code> and <code>OUT</code> instructions. where the assembly program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO ports, an Analog Digital Converter, the 8 LED's on the board, etc)</p>
 <p>One of those peripherals I built is a hardware pseudo-random number generator (PRNG). This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.</p>
 <h2 id="the-galois-lfsr"><a class="zola-anchor" href="#the-galois-lfsr" aria-label="Anchor link for: the-galois-lfsr">The Galois LFSR</a></h2>
 <p>The PRNG is implemented as an 8-bit <strong>Galois Linear Feedback Shift Register</strong> (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The "Galois" configuration places those XOR gates <em>inside</em> the register, in parallel  making it fast in hardware.</p>
@@ -251,7 +251,7 @@ loop:
         Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
         <br/>
         This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies.
-        <span class="version">Version: 451220e</span>
+        <span class="version">Version: 25e24aa</span>
       </div>
     </footer>
     <script>
