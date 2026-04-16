@@ -82,8 +82,9 @@ loop:
 &lt;p&gt;&lt;strong&gt;&lt;code&gt;JMP loop&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt;  Unconditional jump back to &lt;code&gt;loop&lt;&#x2F;code&gt;. The program runs forever.&lt;&#x2F;p&gt;
 &lt;p&gt;The result is a visually chaotic light pattern: each LED appears to toggle independently, with no visible periodicity.&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;in-action&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#in-action&quot; aria-label=&quot;Anchor link for: in-action&quot;&gt;In Action&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Here you see on the display register R7 being filled with the random number and the LEDS on the left display the binary version of it.&lt;&#x2F;p&gt;
 &lt;!-- video placeholder  to be added --&gt;
-&lt;p&gt;&lt;em&gt;Video coming soon.&lt;&#x2F;em&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;&#x2F;content-images&#x2F;prng_in_action.gif&quot; alt=&quot;prng_in_action&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;conclusions&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#conclusions&quot; aria-label=&quot;Anchor link for: conclusions&quot;&gt;Conclusions&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
 &lt;p&gt;A few things stand out from this tiny program:&lt;&#x2F;p&gt;
 &lt;p&gt;&lt;strong&gt;Hardware peripherals keep assembly programs simple.&lt;&#x2F;strong&gt; The LFSR logic  feedback polynomial, maximal-length sequence, zero-lock guard  is entirely in the RTL. The assembly programmer just reads a port. Eight lines of assembly are enough to drive a seemingly random light show.&lt;&#x2F;p&gt;

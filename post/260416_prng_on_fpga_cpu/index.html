@@ -224,8 +224,9 @@ loop:
 <p><strong><code>JMP loop</code></strong>  Unconditional jump back to <code>loop</code>. The program runs forever.</p>
 <p>The result is a visually chaotic light pattern: each LED appears to toggle independently, with no visible periodicity.</p>
 <h2 id="in-action"><a class="zola-anchor" href="#in-action" aria-label="Anchor link for: in-action">In Action</a></h2>
+<p>Here you see on the display register R7 being filled with the random number and the LEDS on the left display the binary version of it.</p>
 <!-- video placeholder  to be added -->
-<p><em>Video coming soon.</em></p>
+<p><img src="/content-images/prng_in_action.gif" alt="prng_in_action" /></p>
 <h2 id="conclusions"><a class="zola-anchor" href="#conclusions" aria-label="Anchor link for: conclusions">Conclusions</a></h2>
 <p>A few things stand out from this tiny program:</p>
 <p><strong>Hardware peripherals keep assembly programs simple.</strong> The LFSR logic  feedback polynomial, maximal-length sequence, zero-lock guard  is entirely in the RTL. The assembly programmer just reads a port. Eight lines of assembly are enough to drive a seemingly random light show.</p>
@@ -250,7 +251,7 @@ loop:
         Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
         <br/>
         This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies.
-        <span class="version">Version: 1b8cbc2</span>
+        <span class="version">Version: 451220e</span>
       </div>
     </footer>
     <script>
