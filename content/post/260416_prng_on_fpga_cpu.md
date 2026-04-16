@@ -15,11 +15,13 @@ image = '/content-images/random_dice.jpg'
 
 As I wrote about [previously](/post/260310_ai_in_electronics_design), I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project [cpu_in_fpga](https://github.com/gertjana/cpu_in_fpga) is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.
 
-I wanted the programs you can run on it: "to do something" (the functional programmer in me would says It needs to have side effects) 
+I wanted the programs you can run on it: "to do something" (the functional programmer in me would say: It needs to have side effects) 
 
 Typically this is done through dedicated `IN` and `OUT` instructions. where the assembly program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO ports, an Analog Digital Converter, the 8 LED's on the board, etc)
 
-One of those peripherals I built is a hardware pseudo-random number generator (PRNG). This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.
+One of those peripherals I built is a hardware pseudo-random number generator (PRNG), as any cpu will benefit from some randomness.
+
+This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.
 
 ## The Galois LFSR
 
