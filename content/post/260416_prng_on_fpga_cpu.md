@@ -9,6 +9,7 @@ tags = ['fpga', 'assembly', 'cpu', 'prng', 'featured']
 [extra]
 author = 'Gertjan Assies'
 image = '/content-images/random_dice.jpg'
+draft = true
 +++
 
 ## The CPU Project
