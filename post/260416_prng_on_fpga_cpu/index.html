@@ -166,12 +166,12 @@
 
       <div class="post-markdown-content">
         <h2 id="the-cpu-project"><a class="zola-anchor" href="#the-cpu-project" aria-label="Anchor link for: the-cpu-project">The CPU Project</a></h2>
-<p>As I wrote about <a href="/post/260310_ai_in_electronics_design">previously</a>, I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project — <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga">cpu_in_fpga</a> — is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.</p>
+<p>As I wrote about <a href="/post/260310_ai_in_electronics_design">previously</a>, I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga">cpu_in_fpga</a> is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.</p>
 <p>I wanted the programs you can run on it, to do something (the functional programmer in me would says It needs to have side effects)
 Typically this is done through dedicated <code>IN</code> and <code>OUT</code> instructions. where the program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO port, an Analog Digital Converter, the 8 LED's on the board)</p>
 <p>One of those peripherals I built is a hardware pseudo-random number generator (PRNG). This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.</p>
 <h2 id="the-galois-lfsr"><a class="zola-anchor" href="#the-galois-lfsr" aria-label="Anchor link for: the-galois-lfsr">The Galois LFSR</a></h2>
-<p>The PRNG is implemented as an 8-bit <strong>Galois Linear Feedback Shift Register</strong> (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The "Galois" configuration places those XOR gates <em>inside</em> the register, in parallel — making it fast in hardware.</p>
+<p>The PRNG is implemented as an 8-bit <strong>Galois Linear Feedback Shift Register</strong> (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The "Galois" configuration places those XOR gates <em>inside</em> the register, in parallel  making it fast in hardware.</p>
 <p>The specific polynomial used here is:</p>
 <pre><code>x⁸ + x⁶ + x⁵ + x⁴ + 1   →   tap mask 0xB8
 </code></pre>
@@ -192,13 +192,13 @@ wire [7:0] next = feedback ? (shifted ^ TAP_MASK) : shifted;
 <p>The relevant port assignments are:</p>
 <table><thead><tr><th>Port</th><th>Peripheral</th><th>IN</th><th>OUT</th></tr></thead><tbody>
 <tr><td><code>0x01</code></td><td>PRNG</td><td>Read current LFSR value</td><td>Seed / reseed the LFSR</td></tr>
-<tr><td><code>0x02</code></td><td>Onboard LEDs</td><td>—</td><td>Set all 8 LEDs at once</td></tr>
+<tr><td><code>0x02</code></td><td>Onboard LEDs</td><td></td><td>Set all 8 LEDs at once</td></tr>
 </tbody></table>
 <p><strong>Reading the PRNG</strong> (<code>IN Rd, 0x01</code>) samples the 8-bit LFSR value at that instant.</p>
 <p><strong>Seeding the PRNG</strong> (<code>OUT Ra, 0x01</code>) loads the value in <code>Ra</code> directly into the LFSR. At power-on the hardware already seeds it from a free-running counter so that each reset starts at a different point, but the program can override that at any time.</p>
 <p><strong>Driving the LEDs</strong> (<code>OUT Ra, 0x02</code>) writes all 8 bits of <code>Ra</code> directly to the eight on-board LEDs. The LED register holds its state until the next write.</p>
 <h2 id="the-program"><a class="zola-anchor" href="#the-program" aria-label="Anchor link for: the-program">The Program</a></h2>
-<pre><code data-lang="armasm">; prng.asm — hardware PRNG demo
+<pre><code data-lang="armasm">; prng.asm  hardware PRNG demo
 ; clk_div: 20
 ; name: Random
 ;
@@ -217,20 +217,20 @@ loop:
         JMP  loop                 ; repeat forever
 </code></pre>
 <p>Let's step through it:</p>
-<p><strong><code>LDI R0, INITIAL_SEED</code></strong> — Load Immediate. Puts the value <code>0x2A</code> (decimal 40) into register R0. This is the starting seed.</p>
-<p><strong><code>OUT R0, PRNG_PORT</code></strong> — Write R0 to port 1. This reseeds the LFSR with <code>0x2A</code>, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).</p>
-<p><strong><code>IN R7, PRNG_PORT</code></strong> — Read port 1 into R7. Because the LFSR is running at 12 MHz and the CPU clock is divided down by 20 (the <code>clk_div: 20</code> header directive), a meaningful number of LFSR cycles have elapsed since the last read. The value in R7 is effectively a fresh random byte every iteration.</p>
-<p><strong><code>OUT R7, LEDS_PORT</code></strong> — Write R7 to port 2. The 8 LEDs instantly reflect the new random value.</p>
-<p><strong><code>JMP loop</code></strong> — Unconditional jump back to <code>loop</code>. The program runs forever.</p>
+<p><strong><code>LDI R0, INITIAL_SEED</code></strong>  Load Immediate. Puts the value <code>0x2A</code> (decimal 40) into register R0. This is the starting seed.</p>
+<p><strong><code>OUT R0, PRNG_PORT</code></strong>  Write R0 to port 1. This reseeds the LFSR with <code>0x2A</code>, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).</p>
+<p><strong><code>IN R7, PRNG_PORT</code></strong>  Read port 1 into R7. Because the LFSR is running at 12 MHz and the CPU clock is divided down by 20 (the <code>clk_div: 20</code> header directive), a meaningful number of LFSR cycles have elapsed since the last read. The value in R7 is effectively a fresh random byte every iteration.</p>
+<p><strong><code>OUT R7, LEDS_PORT</code></strong>  Write R7 to port 2. The 8 LEDs instantly reflect the new random value.</p>
+<p><strong><code>JMP loop</code></strong>  Unconditional jump back to <code>loop</code>. The program runs forever.</p>
 <p>The result is a visually chaotic light pattern: each LED appears to toggle independently, with no visible periodicity.</p>
 <h2 id="in-action"><a class="zola-anchor" href="#in-action" aria-label="Anchor link for: in-action">In Action</a></h2>
-<!-- video placeholder — to be added -->
+<!-- video placeholder  to be added -->
 <p><em>Video coming soon.</em></p>
 <h2 id="conclusions"><a class="zola-anchor" href="#conclusions" aria-label="Anchor link for: conclusions">Conclusions</a></h2>
 <p>A few things stand out from this tiny program:</p>
-<p><strong>Hardware peripherals keep assembly programs simple.</strong> The LFSR logic — feedback polynomial, maximal-length sequence, zero-lock guard — is entirely in the RTL. The assembly programmer just reads a port. Eight lines of assembly are enough to drive a seemingly random light show.</p>
+<p><strong>Hardware peripherals keep assembly programs simple.</strong> The LFSR logic  feedback polynomial, maximal-length sequence, zero-lock guard  is entirely in the RTL. The assembly programmer just reads a port. Eight lines of assembly are enough to drive a seemingly random light show.</p>
 <p><strong>Clock domain separation is a feature.</strong> By running the PRNG on the board clock instead of the CPU clock, the sampling phase is always different. A synchronous PRNG clocked at the same rate as the CPU would return the same value on every read if the CPU read it every cycle. The asynchronous design sidesteps that entirely.</p>
-<p><strong>The <code>IN</code>/<code>OUT</code> instruction pair is a clean peripheral interface.</strong> No memory-mapped registers, no special addressing modes — one instruction to read, one to write. For a small embedded CPU this keeps the decoder and the assembly programmer's mental model both straightforward.</p>
+<p><strong>The <code>IN</code>/<code>OUT</code> instruction pair is a clean peripheral interface.</strong> No memory-mapped registers, no special addressing modes  one instruction to read, one to write. For a small embedded CPU this keeps the decoder and the assembly programmer's mental model both straightforward.</p>
 <p><strong>Seeding matters.</strong> The hardware seeds from a free-running counter at reset, but the program adds its own seed on top. For any application where reproducibility is useful (testing, procedural generation with a known seed) you can control the sequence completely. For applications where you want maximum apparent randomness, you can skip the <code>OUT</code> and rely on the hardware seed.</p>
 <p>The full project, including the Verilog RTL, assembler, and all example programs, is at <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga">github.com/gertjana/cpu_in_fpga</a>.</p>
 
@@ -250,7 +250,7 @@ loop:
         Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
         <br/>
         This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies.
-        <span class="version">Version: cd39b04</span>
+        <span class="version">Version: 00fb158</span>
       </div>
     </footer>
     <script>
