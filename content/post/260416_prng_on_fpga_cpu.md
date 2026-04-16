@@ -13,7 +13,7 @@ image = '/content-images/random_dice.jpg'
 
 ## The CPU Project
 
-As I wrote about [previously](/post/260310_ai_in_electronics_design), I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project — [cpu_in_fpga](https://github.com/gertjana/cpu_in_fpga) — is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.
+As I wrote about [previously](/post/260310_ai_in_electronics_design), I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project [cpu_in_fpga](https://github.com/gertjana/cpu_in_fpga) is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.
 
 I wanted the programs you can run on it, to do something (the functional programmer in me would says It needs to have side effects) 
 Typically this is done through dedicated `IN` and `OUT` instructions. where the program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO port, an Analog Digital Converter, the 8 LED's on the board)
@@ -22,7 +22,7 @@ One of those peripherals I built is a hardware pseudo-random number generator (P
 
 ## The Galois LFSR
 
-The PRNG is implemented as an 8-bit **Galois Linear Feedback Shift Register** (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The "Galois" configuration places those XOR gates _inside_ the register, in parallel — making it fast in hardware.
+The PRNG is implemented as an 8-bit **Galois Linear Feedback Shift Register** (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The "Galois" configuration places those XOR gates _inside_ the register, in parallel  making it fast in hardware.
 
 The specific polynomial used here is:
 
@@ -58,7 +58,7 @@ The relevant port assignments are:
 | Port | Peripheral | IN | OUT |
 |---|---|---|---|
 | `0x01` | PRNG | Read current LFSR value | Seed / reseed the LFSR |
-| `0x02` | Onboard LEDs | — | Set all 8 LEDs at once |
+| `0x02` | Onboard LEDs |  | Set all 8 LEDs at once |
 
 **Reading the PRNG** (`IN Rd, 0x01`) samples the 8-bit LFSR value at that instant.
 
@@ -69,7 +69,7 @@ The relevant port assignments are:
 ## The Program
 
 ```armasm
-; prng.asm — hardware PRNG demo
+; prng.asm  hardware PRNG demo
 ; clk_div: 20
 ; name: Random
 ;
@@ -90,21 +90,21 @@ loop:
 
 Let's step through it:
 
-**`LDI R0, INITIAL_SEED`** — Load Immediate. Puts the value `0x2A` (decimal 40) into register R0. This is the starting seed.
+**`LDI R0, INITIAL_SEED`**  Load Immediate. Puts the value `0x2A` (decimal 40) into register R0. This is the starting seed.
 
-**`OUT R0, PRNG_PORT`** — Write R0 to port 1. This reseeds the LFSR with `0x2A`, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).
+**`OUT R0, PRNG_PORT`**  Write R0 to port 1. This reseeds the LFSR with `0x2A`, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).
 
-**`IN R7, PRNG_PORT`** — Read port 1 into R7. Because the LFSR is running at 12 MHz and the CPU clock is divided down by 20 (the `clk_div: 20` header directive), a meaningful number of LFSR cycles have elapsed since the last read. The value in R7 is effectively a fresh random byte every iteration.
+**`IN R7, PRNG_PORT`**  Read port 1 into R7. Because the LFSR is running at 12 MHz and the CPU clock is divided down by 20 (the `clk_div: 20` header directive), a meaningful number of LFSR cycles have elapsed since the last read. The value in R7 is effectively a fresh random byte every iteration.
 
-**`OUT R7, LEDS_PORT`** — Write R7 to port 2. The 8 LEDs instantly reflect the new random value.
+**`OUT R7, LEDS_PORT`**  Write R7 to port 2. The 8 LEDs instantly reflect the new random value.
 
-**`JMP loop`** — Unconditional jump back to `loop`. The program runs forever.
+**`JMP loop`**  Unconditional jump back to `loop`. The program runs forever.
 
 The result is a visually chaotic light pattern: each LED appears to toggle independently, with no visible periodicity.
 
 ## In Action
 
-<!-- video placeholder — to be added -->
+<!-- video placeholder  to be added -->
 
 *Video coming soon.*
 
@@ -112,11 +112,11 @@ The result is a visually chaotic light pattern: each LED appears to toggle indep
 
 A few things stand out from this tiny program:
 
-**Hardware peripherals keep assembly programs simple.** The LFSR logic — feedback polynomial, maximal-length sequence, zero-lock guard — is entirely in the RTL. The assembly programmer just reads a port. Eight lines of assembly are enough to drive a seemingly random light show.
+**Hardware peripherals keep assembly programs simple.** The LFSR logic  feedback polynomial, maximal-length sequence, zero-lock guard  is entirely in the RTL. The assembly programmer just reads a port. Eight lines of assembly are enough to drive a seemingly random light show.
 
 **Clock domain separation is a feature.** By running the PRNG on the board clock instead of the CPU clock, the sampling phase is always different. A synchronous PRNG clocked at the same rate as the CPU would return the same value on every read if the CPU read it every cycle. The asynchronous design sidesteps that entirely.
 
-**The `IN`/`OUT` instruction pair is a clean peripheral interface.** No memory-mapped registers, no special addressing modes — one instruction to read, one to write. For a small embedded CPU this keeps the decoder and the assembly programmer's mental model both straightforward.
+**The `IN`/`OUT` instruction pair is a clean peripheral interface.** No memory-mapped registers, no special addressing modes  one instruction to read, one to write. For a small embedded CPU this keeps the decoder and the assembly programmer's mental model both straightforward.
 
 **Seeding matters.** The hardware seeds from a free-running counter at reset, but the program adds its own seed on top. For any application where reproducibility is useful (testing, procedural generation with a known seed) you can control the sequence completely. For applications where you want maximum apparent randomness, you can skip the `OUT` and rely on the hardware seed.
 
