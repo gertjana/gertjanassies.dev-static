@@ -16,6 +16,9 @@
     <div class="posts-container">
       <div class="posts-list">
         {% for post in section.pages %}
+          {% if post.extra.draft %}
+            {% continue %}
+          {% endif %}
           {% if post.extra.image is defined and post.extra.image %}
             {% set has_image = true %}
           {% else %}
