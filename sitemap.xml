@@ -117,6 +117,10 @@
         <lastmod>2026-03-10</lastmod>
     </url>
     <url>
+        <loc>https://gertjanassies.dev/post/260416_prng_on_fpga_cpu/</loc>
+        <lastmod>2026-04-16</lastmod>
+    </url>
+    <url>
         <loc>https://gertjanassies.dev/tags/</loc>
     </url>
     <url>
@@ -124,6 +128,12 @@
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/3dprint/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/assembly/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/assembly/page/1/</loc>
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/aws/</loc>
@@ -148,6 +158,12 @@
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/circuitpython/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/cpu/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/cpu/page/1/</loc>
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/customerservice/</loc>
@@ -358,6 +374,12 @@
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/pico/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/prng/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/prng/page/1/</loc>
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/python/</loc>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Random Numbers on a Homebrew FPGA CPU - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions" />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="Random Numbers on a Homebrew FPGA CPU" />
+<meta property="og:description" content="Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions" />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260416_prng_on_fpga_cpu&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev/logo_ga.svg" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2026-04-16T00:00:00Z" />
+
+
+
+<meta property="article:tag" content="fpga" />
+
+<meta property="article:tag" content="assembly" />
+
+<meta property="article:tag" content="cpu" />
+
+<meta property="article:tag" content="prng" />
+
+<meta property="article:tag" content="featured" />
+
+
+
+    
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="gertjanassies.dev" />
+    <meta name="twitter:description" content="Gertjan Assies personal blog, articles about coding and the maker space" />
+    <meta name="twitter:image" content="https:&#x2F;&#x2F;gertjanassies.dev/logo_ga.svg" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260416_prng_on_fpga_cpu&#x2F;" />
+
+    
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <link rel="dns-prefetch" href="//gc.zgo.at" />
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="alternate" type="application/atom+xml" title="gertjanassies.dev feed" href="/atom.xml" />
+
+    
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Random Numbers on a Homebrew FPGA CPU",
+  "description": "Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions",
+  "author": { "@type": "Person", "name": "Gertjan Assies" },
+  "datePublished": "2026-04-16T00:00:00Z",
+  
+  "url": "https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260416_prng_on_fpga_cpu&#x2F;",
+  "image": "https:&#x2F;&#x2F;gertjanassies.dev/logo_ga.svg",
+  "publisher": {
+    "@type": "Person",
+    "name": "Gertjan Assies",
+    "url": "https:&#x2F;&#x2F;gertjanassies.dev"
+  }
+}
+</script>
+
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h1>gertjanassies.dev</h1>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/post/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">Random Numbers on a Homebrew FPGA CPU</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date" datetime="2026-04-16">2026-04-16</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+        <span class="featured-badge">Featured</span>
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+      
+        
+          <a href="/tags/fpga/" class="tag">fpga</a>
+        
+      
+        
+          <a href="/tags/assembly/" class="tag">assembly</a>
+        
+      
+        
+          <a href="/tags/cpu/" class="tag">cpu</a>
+        
+      
+        
+          <a href="/tags/prng/" class="tag">prng</a>
+        
+      
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions</p>
+    
+
+    <div class="post-view-content">
+      
+
+      <div class="post-markdown-content">
+        <h2 id="the-cpu-project"><a class="zola-anchor" href="#the-cpu-project" aria-label="Anchor link for: the-cpu-project">The CPU Project</a></h2>
+<p>As I wrote about <a href="/post/260310_ai_in_electronics_design">previously</a>, I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project — <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga">cpu_in_fpga</a> — is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.</p>
+<p>I wanted the programs you can run on it, to do something (the functional programmer in me would says It needs to have side effects)
+Typically this is done through dedicated <code>IN</code> and <code>OUT</code> instructions. where the program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO port, an Analog Digital Converter, the 8 LED's on the board)</p>
+<p>One of those peripherals I built is a hardware pseudo-random number generator (PRNG). This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.</p>
+<h2 id="the-galois-lfsr"><a class="zola-anchor" href="#the-galois-lfsr" aria-label="Anchor link for: the-galois-lfsr">The Galois LFSR</a></h2>
+<p>The PRNG is implemented as an 8-bit <strong>Galois Linear Feedback Shift Register</strong> (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The "Galois" configuration places those XOR gates <em>inside</em> the register, in parallel — making it fast in hardware.</p>
+<p>The specific polynomial used here is:</p>
+<pre><code>x⁸ + x⁶ + x⁵ + x⁴ + 1   →   tap mask 0xB8
+</code></pre>
+<p>In Verilog the next-state logic is just three lines:</p>
+<pre><code data-lang="verilog">wire feedback = lfsr[0];           // output bit (LSB)
+wire [7:0] shifted = lfsr &gt;&gt; 1;    // shift right
+wire [7:0] next = feedback ? (shifted ^ TAP_MASK) : shifted;
+</code></pre>
+<p>Each clock cycle the register shifts one position to the right. When the outgoing LSB is 1, the tap positions (bits 7, 5, 4, 3 are the set bits of <code>0xB8</code>) are XORed with the shifted value. When it is 0, no XOR happens and the register just shifts.</p>
+<p>This polynomial is <strong>maximal-length</strong>: starting from any non-zero seed it visits all 255 non-zero 8-bit values before cycling back. Zero is the only forbidden state as it would just keep shifting right, never ever changing, the PRNG circuit guards against it by silently replacing a seed of <code>0x00</code> with <code>0x01</code>.</p>
+<p>The LFSR runs on the <strong>12 MHz board clock</strong>, independent of the CPU clock. The CPU runs at a divided-down rate, so every time the program reads the PRNG it samples a different phase of the sequence. The values are not cryptographically random, but they look completely unpredictable from the assembly program's point of view.</p>
+<h2 id="in-and-out-instructions"><a class="zola-anchor" href="#in-and-out-instructions" aria-label="Anchor link for: in-and-out-instructions">IN and OUT Instructions</a></h2>
+<p>The CPU has two instructions for communicating with peripherals:</p>
+<table><thead><tr><th>Instruction</th><th>Encoding</th><th>Operation</th></tr></thead><tbody>
+<tr><td><code>IN  Rd, port</code></td><td><code>1000 ddd ppp xxxxxxxx</code></td><td><code>Rd = peripheral[port]</code></td></tr>
+<tr><td><code>OUT Ra, port</code></td><td><code>1001 aaa ppp xxxxxxxx</code></td><td><code>peripheral[port] = Ra</code></td></tr>
+</tbody></table>
+<p>The relevant port assignments are:</p>
+<table><thead><tr><th>Port</th><th>Peripheral</th><th>IN</th><th>OUT</th></tr></thead><tbody>
+<tr><td><code>0x01</code></td><td>PRNG</td><td>Read current LFSR value</td><td>Seed / reseed the LFSR</td></tr>
+<tr><td><code>0x02</code></td><td>Onboard LEDs</td><td>—</td><td>Set all 8 LEDs at once</td></tr>
+</tbody></table>
+<p><strong>Reading the PRNG</strong> (<code>IN Rd, 0x01</code>) samples the 8-bit LFSR value at that instant.</p>
+<p><strong>Seeding the PRNG</strong> (<code>OUT Ra, 0x01</code>) loads the value in <code>Ra</code> directly into the LFSR. At power-on the hardware already seeds it from a free-running counter so that each reset starts at a different point, but the program can override that at any time.</p>
+<p><strong>Driving the LEDs</strong> (<code>OUT Ra, 0x02</code>) writes all 8 bits of <code>Ra</code> directly to the eight on-board LEDs. The LED register holds its state until the next write.</p>
+<h2 id="the-program"><a class="zola-anchor" href="#the-program" aria-label="Anchor link for: the-program">The Program</a></h2>
+<pre><code data-lang="armasm">; prng.asm — hardware PRNG demo
+; clk_div: 20
+; name: Random
+;
+; Reads the hardware Galois PRNG and displays each value on the LEDs
+
+.equ PRNG_PORT,    0x01
+.equ LEDS_PORT,    0x02
+.equ INITIAL_SEED, 0x2A
+
+        LDI  R0, INITIAL_SEED     ; load seed value (42 decimal)
+        OUT  R0, PRNG_PORT        ; write seed into the LFSR
+
+loop:
+        IN   R7, PRNG_PORT        ; sample current LFSR value
+        OUT  R7, LEDS_PORT        ; show it on the LEDs
+        JMP  loop                 ; repeat forever
+</code></pre>
+<p>Let's step through it:</p>
+<p><strong><code>LDI R0, INITIAL_SEED</code></strong> — Load Immediate. Puts the value <code>0x2A</code> (decimal 40) into register R0. This is the starting seed.</p>
+<p><strong><code>OUT R0, PRNG_PORT</code></strong> — Write R0 to port 1. This reseeds the LFSR with <code>0x2A</code>, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).</p>
+<p><strong><code>IN R7, PRNG_PORT</code></strong> — Read port 1 into R7. Because the LFSR is running at 12 MHz and the CPU clock is divided down by 20 (the <code>clk_div: 20</code> header directive), a meaningful number of LFSR cycles have elapsed since the last read. The value in R7 is effectively a fresh random byte every iteration.</p>
+<p><strong><code>OUT R7, LEDS_PORT</code></strong> — Write R7 to port 2. The 8 LEDs instantly reflect the new random value.</p>
+<p><strong><code>JMP loop</code></strong> — Unconditional jump back to <code>loop</code>. The program runs forever.</p>
+<p>The result is a visually chaotic light pattern: each LED appears to toggle independently, with no visible periodicity.</p>
+<h2 id="in-action"><a class="zola-anchor" href="#in-action" aria-label="Anchor link for: in-action">In Action</a></h2>
+<!-- video placeholder — to be added -->
+<p><em>Video coming soon.</em></p>
+<h2 id="conclusions"><a class="zola-anchor" href="#conclusions" aria-label="Anchor link for: conclusions">Conclusions</a></h2>
+<p>A few things stand out from this tiny program:</p>
+<p><strong>Hardware peripherals keep assembly programs simple.</strong> The LFSR logic — feedback polynomial, maximal-length sequence, zero-lock guard — is entirely in the RTL. The assembly programmer just reads a port. Eight lines of assembly are enough to drive a seemingly random light show.</p>
+<p><strong>Clock domain separation is a feature.</strong> By running the PRNG on the board clock instead of the CPU clock, the sampling phase is always different. A synchronous PRNG clocked at the same rate as the CPU would return the same value on every read if the CPU read it every cycle. The asynchronous design sidesteps that entirely.</p>
+<p><strong>The <code>IN</code>/<code>OUT</code> instruction pair is a clean peripheral interface.</strong> No memory-mapped registers, no special addressing modes — one instruction to read, one to write. For a small embedded CPU this keeps the decoder and the assembly programmer's mental model both straightforward.</p>
+<p><strong>Seeding matters.</strong> The hardware seeds from a free-running counter at reset, but the program adds its own seed on top. For any application where reproducibility is useful (testing, procedural generation with a known seed) you can control the sequence completely. For applications where you want maximum apparent randomness, you can skip the <code>OUT</code> and rely on the hardware seed.</p>
+<p>The full project, including the Verilog RTL, assembler, and all example programs, is at <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga">github.com/gertjana/cpu_in_fpga</a>.</p>
+
+      </div>
+    </div>
+
+    </div>
+  </div>
+
+  
+
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies.
+        <span class="version">Version: cf9e245</span>
+      </div>
+    </footer>
+    <script>
+      document.querySelectorAll('code[data-lang]').forEach(function(el) {
+        var lang = el.getAttribute('data-lang');
+        if (lang === 'sh') lang = 'bash';
+        if (lang === 'docker') lang = 'docker';
+        el.classList.add('language-' + lang);
+      });
+    </script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" crossorigin="anonymous"></script>
+    <script src="/js/copy-code.js"></script>
+    <script data-goatcounter="https://gertjanassies.goatcounter.com/count"
+            async src="//gc.zgo.at/count.js"></script>
+  </body>
+</html>

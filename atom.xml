@@ -5,8 +5,95 @@
     <link rel="self" type="application/atom+xml" href="https://gertjanassies.dev/atom.xml"/>
     <link rel="alternate" type="text/html" href="https://gertjanassies.dev"/>
     <generator uri="https://www.getzola.org/">Zola</generator>
-    <updated>2026-03-10T00:00:00+00:00</updated>
+    <updated>2026-04-16T00:00:00+00:00</updated>
     <id>https://gertjanassies.dev/atom.xml</id>
+    <entry xml:lang="en">
+        <title>Random Numbers on a Homebrew FPGA CPU</title>
+        <published>2026-04-16T00:00:00+00:00</published>
+        <updated>2026-04-16T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://gertjanassies.dev/post/260416_prng_on_fpga_cpu/"/>
+        <id>https://gertjanassies.dev/post/260416_prng_on_fpga_cpu/</id>
+        
+        <content type="html" xml:base="https://gertjanassies.dev/post/260416_prng_on_fpga_cpu/">&lt;h2 id=&quot;the-cpu-project&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-cpu-project&quot; aria-label=&quot;Anchor link for: the-cpu-project&quot;&gt;The CPU Project&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;As I wrote about &lt;a href=&quot;&#x2F;post&#x2F;260310_ai_in_electronics_design&quot;&gt;previously&lt;&#x2F;a&gt;, I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project — &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;cpu_in_fpga&quot;&gt;cpu_in_fpga&lt;&#x2F;a&gt; — is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.&lt;&#x2F;p&gt;
+&lt;p&gt;I wanted the programs you can run on it, to do something (the functional programmer in me would says It needs to have side effects)
+Typically this is done through dedicated &lt;code&gt;IN&lt;&#x2F;code&gt; and &lt;code&gt;OUT&lt;&#x2F;code&gt; instructions. where the program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO port, an Analog Digital Converter, the 8 LED&#x27;s on the board)&lt;&#x2F;p&gt;
+&lt;p&gt;One of those peripherals I built is a hardware pseudo-random number generator (PRNG). This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;the-galois-lfsr&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-galois-lfsr&quot; aria-label=&quot;Anchor link for: the-galois-lfsr&quot;&gt;The Galois LFSR&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The PRNG is implemented as an 8-bit &lt;strong&gt;Galois Linear Feedback Shift Register&lt;&#x2F;strong&gt; (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The &quot;Galois&quot; configuration places those XOR gates &lt;em&gt;inside&lt;&#x2F;em&gt; the register, in parallel — making it fast in hardware.&lt;&#x2F;p&gt;
+&lt;p&gt;The specific polynomial used here is:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code&gt;x⁸ + x⁶ + x⁵ + x⁴ + 1   →   tap mask 0xB8
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;In Verilog the next-state logic is just three lines:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;verilog&quot;&gt;wire feedback = lfsr[0];           &#x2F;&#x2F; output bit (LSB)
+wire [7:0] shifted = lfsr &amp;gt;&amp;gt; 1;    &#x2F;&#x2F; shift right
+wire [7:0] next = feedback ? (shifted ^ TAP_MASK) : shifted;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Each clock cycle the register shifts one position to the right. When the outgoing LSB is 1, the tap positions (bits 7, 5, 4, 3 are the set bits of &lt;code&gt;0xB8&lt;&#x2F;code&gt;) are XORed with the shifted value. When it is 0, no XOR happens and the register just shifts.&lt;&#x2F;p&gt;
+&lt;p&gt;This polynomial is &lt;strong&gt;maximal-length&lt;&#x2F;strong&gt;: starting from any non-zero seed it visits all 255 non-zero 8-bit values before cycling back. Zero is the only forbidden state as it would just keep shifting right, never ever changing, the PRNG circuit guards against it by silently replacing a seed of &lt;code&gt;0x00&lt;&#x2F;code&gt; with &lt;code&gt;0x01&lt;&#x2F;code&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;The LFSR runs on the &lt;strong&gt;12 MHz board clock&lt;&#x2F;strong&gt;, independent of the CPU clock. The CPU runs at a divided-down rate, so every time the program reads the PRNG it samples a different phase of the sequence. The values are not cryptographically random, but they look completely unpredictable from the assembly program&#x27;s point of view.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;in-and-out-instructions&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#in-and-out-instructions&quot; aria-label=&quot;Anchor link for: in-and-out-instructions&quot;&gt;IN and OUT Instructions&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;The CPU has two instructions for communicating with peripherals:&lt;&#x2F;p&gt;
+&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Instruction&lt;&#x2F;th&gt;&lt;th&gt;Encoding&lt;&#x2F;th&gt;&lt;th&gt;Operation&lt;&#x2F;th&gt;&lt;&#x2F;tr&gt;&lt;&#x2F;thead&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;IN  Rd, port&lt;&#x2F;code&gt;&lt;&#x2F;td&gt;&lt;td&gt;&lt;code&gt;1000 ddd ppp xxxxxxxx&lt;&#x2F;code&gt;&lt;&#x2F;td&gt;&lt;td&gt;&lt;code&gt;Rd = peripheral[port]&lt;&#x2F;code&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;OUT Ra, port&lt;&#x2F;code&gt;&lt;&#x2F;td&gt;&lt;td&gt;&lt;code&gt;1001 aaa ppp xxxxxxxx&lt;&#x2F;code&gt;&lt;&#x2F;td&gt;&lt;td&gt;&lt;code&gt;peripheral[port] = Ra&lt;&#x2F;code&gt;&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;&#x2F;tbody&gt;&lt;&#x2F;table&gt;
+&lt;p&gt;The relevant port assignments are:&lt;&#x2F;p&gt;
+&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Port&lt;&#x2F;th&gt;&lt;th&gt;Peripheral&lt;&#x2F;th&gt;&lt;th&gt;IN&lt;&#x2F;th&gt;&lt;th&gt;OUT&lt;&#x2F;th&gt;&lt;&#x2F;tr&gt;&lt;&#x2F;thead&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;0x01&lt;&#x2F;code&gt;&lt;&#x2F;td&gt;&lt;td&gt;PRNG&lt;&#x2F;td&gt;&lt;td&gt;Read current LFSR value&lt;&#x2F;td&gt;&lt;td&gt;Seed &#x2F; reseed the LFSR&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;0x02&lt;&#x2F;code&gt;&lt;&#x2F;td&gt;&lt;td&gt;Onboard LEDs&lt;&#x2F;td&gt;&lt;td&gt;—&lt;&#x2F;td&gt;&lt;td&gt;Set all 8 LEDs at once&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
+&lt;&#x2F;tbody&gt;&lt;&#x2F;table&gt;
+&lt;p&gt;&lt;strong&gt;Reading the PRNG&lt;&#x2F;strong&gt; (&lt;code&gt;IN Rd, 0x01&lt;&#x2F;code&gt;) samples the 8-bit LFSR value at that instant.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Seeding the PRNG&lt;&#x2F;strong&gt; (&lt;code&gt;OUT Ra, 0x01&lt;&#x2F;code&gt;) loads the value in &lt;code&gt;Ra&lt;&#x2F;code&gt; directly into the LFSR. At power-on the hardware already seeds it from a free-running counter so that each reset starts at a different point, but the program can override that at any time.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Driving the LEDs&lt;&#x2F;strong&gt; (&lt;code&gt;OUT Ra, 0x02&lt;&#x2F;code&gt;) writes all 8 bits of &lt;code&gt;Ra&lt;&#x2F;code&gt; directly to the eight on-board LEDs. The LED register holds its state until the next write.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;the-program&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-program&quot; aria-label=&quot;Anchor link for: the-program&quot;&gt;The Program&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;pre&gt;&lt;code data-lang=&quot;armasm&quot;&gt;; prng.asm — hardware PRNG demo
+; clk_div: 20
+; name: Random
+;
+; Reads the hardware Galois PRNG and displays each value on the LEDs
+
+.equ PRNG_PORT,    0x01
+.equ LEDS_PORT,    0x02
+.equ INITIAL_SEED, 0x2A
+
+        LDI  R0, INITIAL_SEED     ; load seed value (42 decimal)
+        OUT  R0, PRNG_PORT        ; write seed into the LFSR
+
+loop:
+        IN   R7, PRNG_PORT        ; sample current LFSR value
+        OUT  R7, LEDS_PORT        ; show it on the LEDs
+        JMP  loop                 ; repeat forever
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Let&#x27;s step through it:&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;LDI R0, INITIAL_SEED&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt; — Load Immediate. Puts the value &lt;code&gt;0x2A&lt;&#x2F;code&gt; (decimal 40) into register R0. This is the starting seed.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;OUT R0, PRNG_PORT&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt; — Write R0 to port 1. This reseeds the LFSR with &lt;code&gt;0x2A&lt;&#x2F;code&gt;, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;IN R7, PRNG_PORT&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt; — Read port 1 into R7. Because the LFSR is running at 12 MHz and the CPU clock is divided down by 20 (the &lt;code&gt;clk_div: 20&lt;&#x2F;code&gt; header directive), a meaningful number of LFSR cycles have elapsed since the last read. The value in R7 is effectively a fresh random byte every iteration.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;OUT R7, LEDS_PORT&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt; — Write R7 to port 2. The 8 LEDs instantly reflect the new random value.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;JMP loop&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt; — Unconditional jump back to &lt;code&gt;loop&lt;&#x2F;code&gt;. The program runs forever.&lt;&#x2F;p&gt;
+&lt;p&gt;The result is a visually chaotic light pattern: each LED appears to toggle independently, with no visible periodicity.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;in-action&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#in-action&quot; aria-label=&quot;Anchor link for: in-action&quot;&gt;In Action&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;!-- video placeholder — to be added --&gt;
+&lt;p&gt;&lt;em&gt;Video coming soon.&lt;&#x2F;em&gt;&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;conclusions&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#conclusions&quot; aria-label=&quot;Anchor link for: conclusions&quot;&gt;Conclusions&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;A few things stand out from this tiny program:&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Hardware peripherals keep assembly programs simple.&lt;&#x2F;strong&gt; The LFSR logic — feedback polynomial, maximal-length sequence, zero-lock guard — is entirely in the RTL. The assembly programmer just reads a port. Eight lines of assembly are enough to drive a seemingly random light show.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Clock domain separation is a feature.&lt;&#x2F;strong&gt; By running the PRNG on the board clock instead of the CPU clock, the sampling phase is always different. A synchronous PRNG clocked at the same rate as the CPU would return the same value on every read if the CPU read it every cycle. The asynchronous design sidesteps that entirely.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;The &lt;code&gt;IN&lt;&#x2F;code&gt;&#x2F;&lt;code&gt;OUT&lt;&#x2F;code&gt; instruction pair is a clean peripheral interface.&lt;&#x2F;strong&gt; No memory-mapped registers, no special addressing modes — one instruction to read, one to write. For a small embedded CPU this keeps the decoder and the assembly programmer&#x27;s mental model both straightforward.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Seeding matters.&lt;&#x2F;strong&gt; The hardware seeds from a free-running counter at reset, but the program adds its own seed on top. For any application where reproducibility is useful (testing, procedural generation with a known seed) you can control the sequence completely. For applications where you want maximum apparent randomness, you can skip the &lt;code&gt;OUT&lt;&#x2F;code&gt; and rely on the hardware seed.&lt;&#x2F;p&gt;
+&lt;p&gt;The full project, including the Verilog RTL, assembler, and all example programs, is at &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;cpu_in_fpga&quot;&gt;github.com&#x2F;gertjana&#x2F;cpu_in_fpga&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
     <entry xml:lang="en">
         <title>Experimenting with AI in FPGA Development</title>
         <published>2026-03-10T00:00:00+00:00</published>
