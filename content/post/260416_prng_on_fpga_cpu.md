@@ -9,7 +9,6 @@ tags = ['fpga', 'assembly', 'cpu', 'prng', 'featured']
 [extra]
 author = 'Gertjan Assies'
 image = '/content-images/random_dice.jpg'
-draft = true
 +++
 
 ## The CPU Project
@@ -105,9 +104,12 @@ The result is a visually chaotic light pattern: each LED appears to toggle indep
 
 ## In Action
 
+Here you see on the display register R7 being filled with the random number and the LEDS on the left display the binary version of it.
+
+
 <!-- video placeholder  to be added -->
 
-*Video coming soon.*
+![prng_in_action](/content-images/prng_in_action.gif)
 
 ## Conclusions
 
