@@ -126,4 +126,4 @@ In my opinion the two most important concepts in working with Agentic AI are **c
 
 ## The Repo
 
-The full project agents, templates, slash commands, install script is at [github.com/gertjana/spec-driven-agents](https://github.com/gertjana/spec-driven-agents).
+The full project (agents, templates, slash commands and install script) is at [github.com/gertjana/spec-driven-agents](https://github.com/gertjana/spec-driven-agents).
