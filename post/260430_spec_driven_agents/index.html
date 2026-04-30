@@ -170,7 +170,7 @@
 <p>The usual answer is to impose rules: "don't change the spec", "write tests first". But rules in a single chat are easy to accidentally violate, hard to enforce, and easy to forget across sessions.</p>
 <h2 id="three-lanes-three-agents"><a class="zola-anchor" href="#three-lanes-three-agents" aria-label="Anchor link for: three-lanes-three-agents">Three Lanes, Three Agents</a></h2>
 <p>The <a rel="noopener external" target="_blank" href="https://github.com/gertjana/spec-driven-agents">spec-driven-agents</a> project is my answer to this: split the workflow into three isolated subagent lanes that communicate <strong>only via committed files</strong>. No shared chat history, no leaking context across lanes.</p>
-<img src="/content-images/spec-driven-agents-diagram.svg" alt="Spec Driven Agents Diagram" width="500px" />
+<img src="/content-images/spec-driven-agents-diagram.svg" alt="Spec Driven Agents Diagram" width="600px" style="float:right" />
 <p>Each agent has a clear job:</p>
 <ul>
 <li><strong><code>@spec</code></strong> interviews you and produces a structured spec at <code>specs/&lt;slug&gt;/spec.md</code>. It asks about acceptance criteria, scope, and edge cases — and commits the result.</li>
@@ -262,7 +262,7 @@ cd spec-driven-agents
         Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
         <br/>
         This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies.
-        <span class="version">Version: 388f0ff</span>
+        <span class="version">Version: 2546f3e</span>
       </div>
     </footer>
     <script>
