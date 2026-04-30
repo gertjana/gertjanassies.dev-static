@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Spec-Driven Agents - gertjanassies.dev</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Gertjan Assies" />
+    <meta name="robots" content="index, follow, archive" />
+
+    
+    
+<meta name="description" content="A three-lane workflow for AI-assisted development: spec, test, and implement — each in its own isolated subagent" />
+
+
+    
+    
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="gertjanassies.dev" />
+<meta property="og:title" content="Spec-Driven Agents" />
+<meta property="og:description" content="A three-lane workflow for AI-assisted development: spec, test, and implement — each in its own isolated subagent" />
+<meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260430_spec_driven_agents&#x2F;" />
+
+<meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;spec_test_impl.jpg" />
+
+<meta property="article:author" content="Gertjan Assies" />
+
+<meta property="article:published_time" content="2026-04-30T00:00:00Z" />
+
+
+
+<meta property="article:tag" content="ai" />
+
+<meta property="article:tag" content="opencode" />
+
+<meta property="article:tag" content="tdd" />
+
+<meta property="article:tag" content="agents" />
+
+<meta property="article:tag" content="featured" />
+
+
+
+    
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:creator" content="@major7" />
+    <meta name="twitter:site" content="@major7" />
+    <meta name="twitter:title" content="gertjanassies.dev" />
+    <meta name="twitter:description" content="Gertjan Assies personal blog, articles about coding and the maker space" />
+    <meta name="twitter:image" content="https:&#x2F;&#x2F;gertjanassies.dev/logo_ga.svg" />
+
+    
+    <link rel="canonical" href="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260430_spec_driven_agents&#x2F;" />
+
+    
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <link rel="dns-prefetch" href="//gc.zgo.at" />
+    <link rel="stylesheet" href="/styles/color-palette.css" />
+    <link rel="stylesheet" href="/styles/prism-one-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/styles/prism-one-dark.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="/main.css" />
+
+    
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="alternate" type="application/atom+xml" title="gertjanassies.dev feed" href="/atom.xml" />
+
+    
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Spec-Driven Agents",
+  "description": "A three-lane workflow for AI-assisted development: spec, test, and implement — each in its own isolated subagent",
+  "author": { "@type": "Person", "name": "Gertjan Assies" },
+  "datePublished": "2026-04-30T00:00:00Z",
+  
+  "url": "https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260430_spec_driven_agents&#x2F;",
+  "image": "https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;spec_test_impl.jpg",
+  "publisher": {
+    "@type": "Person",
+    "name": "Gertjan Assies",
+    "url": "https:&#x2F;&#x2F;gertjanassies.dev"
+  }
+}
+</script>
+
+  </head>
+  <body>
+    <header>
+      <div class="header">
+        <div class="header-left">
+          <a href="/">
+            <img src="/logo_ga.svg" alt="Logo Gertjan Assies" style="height: 50px; position: absolute; top: 10px; left: 10px;" />
+          </a>
+          <h1>gertjanassies.dev</h1>
+          <sub>ramblings of a chaotic mind</sub>
+        </div>
+        <div class="header-right">
+          <nav>
+            <a href="/">home</a>
+            <a href="/post/">blog</a>
+            <a href="/about/">about</a>
+            <span>categories: </span>
+            <a href="/categories/code/">code</a>
+            <a href="/categories/make/">make</a>
+            <a href="/categories/tooling/">tooling</a>
+            <a href="/categories/life/">life</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      
+<div class="posts-container">
+  <div class="post-view-container">
+
+    <h1 class="post-view-title">Spec-Driven Agents</h1>
+
+    <div class="post-view-meta">
+      
+        <time class="post-date" datetime="2026-04-30">2026-04-30</time>
+      
+      <span class="post-author">By Gertjan Assies</span>
+      
+      
+        <span class="featured-badge">Featured</span>
+      
+    </div>
+
+    <div class="post-view-taxonomy">
+      
+        <a href="/categories/code/" class="category">code</a>
+      
+      
+        
+          <a href="/tags/ai/" class="tag">ai</a>
+        
+      
+        
+          <a href="/tags/opencode/" class="tag">opencode</a>
+        
+      
+        
+          <a href="/tags/tdd/" class="tag">tdd</a>
+        
+      
+        
+          <a href="/tags/agents/" class="tag">agents</a>
+        
+      
+        
+      
+    </div>
+
+    
+      <p class="post-view-summary">A three-lane workflow for AI-assisted development: spec, test, and implement — each in its own isolated subagent</p>
+    
+
+    <div class="post-view-content">
+      
+        <img class="post-view-featured-image" src="&#x2F;content-images&#x2F;spec_test_impl.jpg" alt="Spec-Driven Agents" />
+      
+
+      <div class="post-markdown-content">
+        <h2 id="the-problem-with-ai-assisted-development"><a class="zola-anchor" href="#the-problem-with-ai-assisted-development" aria-label="Anchor link for: the-problem-with-ai-assisted-development">The Problem with AI-Assisted Development</a></h2>
+<p>When you use an AI coding agent in a single chat session to go from idea to implementation, things tend to blur. The agent holds the spec, the tests, and the code all in one context — and when it decides to "adjust the spec" to make tests pass, or skips writing real tests because the implementation is already done, you've lost the discipline that makes software trustworthy.</p>
+<p>The usual answer is to impose rules: "don't change the spec", "write tests first". But rules in a single chat are easy to accidentally violate, hard to enforce, and easy to forget across sessions.</p>
+<h2 id="three-lanes-three-agents"><a class="zola-anchor" href="#three-lanes-three-agents" aria-label="Anchor link for: three-lanes-three-agents">Three Lanes, Three Agents</a></h2>
+<p>The <a rel="noopener external" target="_blank" href="https://github.com/gertjana/spec-driven-agents">spec-driven-agents</a> project is my answer to this: split the workflow into three isolated subagent lanes that communicate <strong>only via committed files</strong>. No shared chat history, no leaking context across lanes.</p>
+<p><img src="/content-images/spec-driven-agents-diagram.svg" alt="Spec Driven Agents Diagram" /></p>
+<p>Each agent has a clear job:</p>
+<ul>
+<li><strong><code>@spec</code></strong> interviews you and produces a structured spec at <code>specs/&lt;slug&gt;/spec.md</code>. It asks about acceptance criteria, scope, and edge cases — and commits the result.</li>
+<li><strong><code>@test</code></strong> reads only the spec and produces complete, executable Gherkin scenarios with real step definitions. Not stubs. The suite must be red because production code is missing, not because the steps throw "not implemented".</li>
+<li><strong><code>@impl</code></strong> reads spec and features, verifies the suite is red for the right reasons, then drives it green one scenario at a time using classic TDD — red, green, refactor.</li>
+</ul>
+<h2 id="lane-discipline"><a class="zola-anchor" href="#lane-discipline" aria-label="Anchor link for: lane-discipline">Lane Discipline</a></h2>
+<p>The key insight is that each agent communicates <strong>only through committed files</strong>. The <code>@spec</code> agent writes to <code>specs/</code>. The <code>@test</code> agent writes to <code>features/</code> and step definitions. The <code>@impl</code> agent writes to <code>src/</code> and unit tests. None of them touch each other's territory — enforced both by OpenCode <code>permission</code> frontmatter and by explicit prompt instructions.</p>
+<p>A per-project <code>.spec-agents.toml</code> file holds the authoritative paths:</p>
+<p>Shown below is the template, once you run <code>/init-spec-workflow</code> it will try to detect the language and fill the correct paths and commands</p>
+<pre><code data-lang="toml"># Generated by /init-spec-workflow. Edit freely; agents read this at runtime.
+# This file is the per-project source of truth for spec-driven-agent paths and commands.
+
+schema_version = 1
+language = &quot;__LANGUAGE__&quot;
+
+[paths]
+specs            = &quot;__SPECS__&quot;
+features         = &quot;__FEATURES__&quot;
+acceptance_tests = &quot;__ACCEPTANCE_TESTS__&quot;
+unit_tests       = &quot;__UNIT_TESTS__&quot;
+src              = &quot;__SRC__&quot;
+agentlog         = &quot;__AGENTLOG__&quot;
+
+[commands]
+test_acceptance = &quot;__CMD_TEST_ACCEPTANCE__&quot;
+test_unit       = &quot;__CMD_TEST_UNIT__&quot;
+build           = &quot;__CMD_BUILD__&quot;
+
+[lanes]
+# Optional extra glob patterns each agent is allowed to write to,
+# beyond the corresponding [paths] entry. Useful for languages where
+# tests live next to source (Go, Rust inline tests).
+spec_writer_extra_writes  = []
+test_author_extra_writes  = []
+</code></pre>
+<p>If the file is missing, agents stop and tell you to run <code>/init-spec-workflow</code>.</p>
+<h2 id="escalation-instead-of-approximation"><a class="zola-anchor" href="#escalation-instead-of-approximation" aria-label="Anchor link for: escalation-instead-of-approximation">Escalation Instead of Approximation</a></h2>
+<p>One discipline the <code>@test</code> agent enforces that is very useful: if an Acceptance Criterion cannot be expressed as a pure-code assertion with the project's current test tooling, it does <strong>not</strong> approximate. It escalates.</p>
+<p>It appends a note to <code>.agentlog/&lt;slug&gt;.md</code> and stops. You then go back to <code>@spec</code> to rewrite or drop the AC, or you widen the project's test dependencies. No silent hand-waving.</p>
+<p>This matters because a test that says "this UI button is clicked" but actually just asserts that a function exists is worse than no test at all — it gives false confidence.</p>
+<h2 id="getting-started"><a class="zola-anchor" href="#getting-started" aria-label="Anchor link for: getting-started">Getting Started</a></h2>
+<p>The project installs with a single script:</p>
+<pre><code data-lang="sh">git clone https://github.com/gertjana/spec-driven-agents
+cd spec-driven-agents
+./install.sh
+</code></pre>
+<p>This symlinks the agents, slash commands, and scaffold script into <code>~/.config/opencode/</code>. Then in any project:</p>
+<pre><code data-lang="sh">cd ~/Projects/some-project
+</code></pre>
+<p>and in opencode run</p>
+<pre><code data-lang="opencode">/init-spec-workflow
+...
+
+@spec let&#39;s spec a new &quot;user-login&quot; feature
+# review specs/user-login/spec.md, edit if needed
+@test user-login
+@impl user-login
+</code></pre>
+<p>Languages with auto-detected paths include Rust, Scala, JS/TS, Python, Go, Elixir, Java, and Kotlin.</p>
+<h2 id="what-i-ve-learned"><a class="zola-anchor" href="#what-i-ve-learned" aria-label="Anchor link for: what-i-ve-learned">What I've Learned</a></h2>
+<p>Running real sessions with this setup has surfaced a few recurring patterns worth noting:</p>
+<p>LLM's like to take shortcuts, in one of the first tests I did with this, the @test agent, only wrote test stubs as it 'couldn't write the tests as it did not know the implementation'</p>
+<p>Before <code>@impl</code> writes any code, it must confirm the acceptance suite is red for production-side reasons. This catches a whole category of bugs where tests pass vacuously — wrong import path, wrong test command, tests not discovered — before you've committed to an implementation direction.</p>
+<p>When <code>@test</code> escalates, resist the urge to patch the test. Go back to the spec. Either the AC was too implementation-specific, too vague, or it assumed tooling you don't have. Fixing it at the spec level keeps the contract honest.</p>
+<p>The handoff from <code>@spec</code> to <code>@test</code> is not automatic — you read the spec first. This is a feature, not a bug. It's your last cheap chance to catch scope creep, missing edge cases, or criteria that sound right but won't survive contact with an actual test.</p>
+<h2 id="conclusion"><a class="zola-anchor" href="#conclusion" aria-label="Anchor link for: conclusion">Conclusion</a></h2>
+<p>In my opinion the two most important concepts in working with Agentic AI is <strong>context</strong> and <strong>guardrails</strong> and both are covered with this approach</p>
+<ul>
+<li>Context: The project and the detailed feature spec provide a clear context</li>
+<li>Guardrails: Implicit isolation between spec, test and implementation.</li>
+</ul>
+<h2 id="the-repo"><a class="zola-anchor" href="#the-repo" aria-label="Anchor link for: the-repo">The Repo</a></h2>
+<p>The full project — agents, templates, slash commands, install script, and field notes — is at <a rel="noopener external" target="_blank" href="https://github.com/gertjana/spec-driven-agents">github.com/gertjana/spec-driven-agents</a>.</p>
+
+      </div>
+    </div>
+
+    </div>
+  </div>
+
+  
+
+</div>
+
+    </main>
+    <footer>
+      <div class="footer">
+        Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
+        <br/>
+        This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies.
+        <span class="version">Version: 252c750</span>
+      </div>
+    </footer>
+    <script>
+      document.querySelectorAll('code[data-lang]').forEach(function(el) {
+        var lang = el.getAttribute('data-lang');
+        if (lang === 'sh') lang = 'bash';
+        if (lang === 'docker') lang = 'docker';
+        el.classList.add('language-' + lang);
+      });
+    </script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" crossorigin="anonymous"></script>
+    <script src="/js/copy-code.js"></script>
+    <script data-goatcounter="https://gertjanassies.goatcounter.com/count"
+            async src="//gc.zgo.at/count.js"></script>
+  </body>
+</html>

@@ -121,6 +121,10 @@
         <lastmod>2026-04-16</lastmod>
     </url>
     <url>
+        <loc>https://gertjanassies.dev/post/260430_spec_driven_agents/</loc>
+        <lastmod>2026-04-30</lastmod>
+    </url>
+    <url>
         <loc>https://gertjanassies.dev/tags/</loc>
     </url>
     <url>
@@ -128,6 +132,18 @@
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/3dprint/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/agents/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/agents/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/ai/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/ai/page/1/</loc>
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/assembly/</loc>
@@ -358,6 +374,12 @@
         <loc>https://gertjanassies.dev/tags/oidc/page/1/</loc>
     </url>
     <url>
+        <loc>https://gertjanassies.dev/tags/opencode/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/opencode/page/1/</loc>
+    </url>
+    <url>
         <loc>https://gertjanassies.dev/tags/optimization/</loc>
     </url>
     <url>
@@ -446,6 +468,12 @@
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/sveltekit/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/tdd/</loc>
+    </url>
+    <url>
+        <loc>https://gertjanassies.dev/tags/tdd/page/1/</loc>
     </url>
     <url>
         <loc>https://gertjanassies.dev/tags/terminal/</loc>
