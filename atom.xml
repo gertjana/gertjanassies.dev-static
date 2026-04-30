@@ -28,7 +28,7 @@
 &lt;p&gt;The usual answer is to impose rules: &quot;don&#x27;t change the spec&quot;, &quot;write tests first&quot;. But rules in a single chat are easy to accidentally violate, hard to enforce, and easy to forget across sessions.&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;three-lanes-three-agents&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#three-lanes-three-agents&quot; aria-label=&quot;Anchor link for: three-lanes-three-agents&quot;&gt;Three Lanes, Three Agents&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
 &lt;p&gt;The &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;spec-driven-agents&quot;&gt;spec-driven-agents&lt;&#x2F;a&gt; project is my answer to this: split the workflow into three isolated subagent lanes that communicate &lt;strong&gt;only via committed files&lt;&#x2F;strong&gt;. No shared chat history, no leaking context across lanes.&lt;&#x2F;p&gt;
-&lt;p&gt;&lt;img src=&quot;&#x2F;content-images&#x2F;spec-driven-agents-diagram.svg&quot; alt=&quot;Spec Driven Agents Diagram&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;img src=&quot;&#x2F;content-images&#x2F;spec-driven-agents-diagram.svg&quot; alt=&quot;Spec Driven Agents Diagram&quot; width=&quot;500px&quot; &#x2F;&gt;
 &lt;p&gt;Each agent has a clear job:&lt;&#x2F;p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;&lt;code&gt;@spec&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt; interviews you and produces a structured spec at &lt;code&gt;specs&#x2F;&amp;lt;slug&amp;gt;&#x2F;spec.md&lt;&#x2F;code&gt;. It asks about acceptance criteria, scope, and edge cases — and commits the result.&lt;&#x2F;li&gt;
