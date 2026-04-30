@@ -86,12 +86,9 @@ cd spec-driven-agents
 ./install.sh
 ```
 
-This symlinks the agents, slash commands, and scaffold script into `~/.config/opencode/`. Then in any project:
+This symlinks the agents, slash commands, and scaffold script into `~/.config/opencode/`. Then run opencode in any project:
 
-```sh
-cd ~/Projects/some-project
-```
-and in opencode run
+and within opencode run
 ```opencode
 /init-spec-workflow
 ...
