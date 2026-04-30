@@ -76,10 +76,8 @@ test_author_extra_writes  = []
 cd spec-driven-agents
 .&#x2F;install.sh
 &lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
-&lt;p&gt;This symlinks the agents, slash commands, and scaffold script into &lt;code&gt;~&#x2F;.config&#x2F;opencode&#x2F;&lt;&#x2F;code&gt;. Then in any project:&lt;&#x2F;p&gt;
-&lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;cd ~&#x2F;Projects&#x2F;some-project
-&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
-&lt;p&gt;and in opencode run&lt;&#x2F;p&gt;
+&lt;p&gt;This symlinks the agents, slash commands, and scaffold script into &lt;code&gt;~&#x2F;.config&#x2F;opencode&#x2F;&lt;&#x2F;code&gt;. Then run opencode in any project:&lt;&#x2F;p&gt;
+&lt;p&gt;and within opencode run&lt;&#x2F;p&gt;
 &lt;pre&gt;&lt;code data-lang=&quot;opencode&quot;&gt;&#x2F;init-spec-workflow
 ...
 
