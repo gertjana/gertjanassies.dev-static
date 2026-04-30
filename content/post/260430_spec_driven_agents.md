@@ -2,7 +2,7 @@
 path = "post/260430_spec_driven_agents"
 title = 'Spec-Driven Agents'
 date = '2026-04-30'
-description = 'A three-lane workflow for AI-assisted development: spec, test, and implement — each in its own isolated subagent'
+description = 'A three-lane workflow for AI-assisted development: spec, test, and implement each in its own isolated subagent'
 [taxonomies]
 categories = ['code']
 tags = ['ai', 'opencode', 'tdd', 'agents', 'featured']
@@ -13,7 +13,7 @@ image = '/content-images/spec_test_impl.jpg'
 
 ## The Problem with AI-Assisted Development
 
-When you use an AI coding agent in a single chat session to go from idea to implementation, things tend to blur. The agent holds the spec, the tests, and the code all in one context — and when it decides to "adjust the spec" to make tests pass, or skips writing real tests because the implementation is already done, you've lost the discipline that makes software trustworthy.
+When you use an AI coding agent in a single chat session to go from idea to implementation, things tend to blur. The agent holds the spec, the tests, and the code all in one context and when it decides to "adjust the spec" to make tests pass, or skips writing real tests because the implementation is already done, you've lost the discipline that makes software trustworthy.
 
 The usual answer is to impose rules: "don't change the spec", "write tests first". But rules in a single chat are easy to accidentally violate, hard to enforce, and easy to forget across sessions.
 
@@ -25,13 +25,13 @@ The [spec-driven-agents](https://github.com/gertjana/spec-driven-agents) project
 
 Each agent has a clear job:
 
-- **`@spec`** interviews you and produces a structured spec at `specs/<slug>/spec.md`. It asks about acceptance criteria, scope, and edge cases — and commits the result.
+- **`@spec`** interviews you and produces a structured spec at `specs/<slug>/spec.md`. It asks about acceptance criteria, scope, and edge cases and commits the result.
 - **`@test`** reads only the spec and produces complete, executable Gherkin scenarios with real step definitions. Not stubs. The suite must be red because production code is missing, not because the steps throw "not implemented".
-- **`@impl`** reads spec and features, verifies the suite is red for the right reasons, then drives it green one scenario at a time using classic TDD — red, green, refactor.
+- **`@impl`** reads spec and features, verifies the suite is red for the right reasons, then drives it green one scenario at a time using classic TDD red, green, refactor.
 
 ## Lane Discipline
 
-The key insight is that each agent communicates **only through committed files**. The `@spec` agent writes to `specs/`. The `@test` agent writes to `features/` and step definitions. The `@impl` agent writes to `src/` and unit tests. None of them touch each other's territory — enforced both by OpenCode `permission` frontmatter and by explicit prompt instructions.
+The key insight is that each agent communicates **only through committed files**. The `@spec` agent writes to `specs/`. The `@test` agent writes to `features/` and step definitions. The `@impl` agent writes to `src/` and unit tests. None of them touch each other's territory enforced both by OpenCode `permission` frontmatter and by explicit prompt instructions.
 
 A per-project `.spec-agents.toml` file holds the authoritative paths:
 
@@ -74,7 +74,7 @@ One discipline the `@test` agent enforces that is very useful: if an Acceptance 
 
 It appends a note to `.agentlog/<slug>.md` and stops. You then go back to `@spec` to rewrite or drop the AC, or you widen the project's test dependencies. No silent hand-waving.
 
-This matters because a test that says "this UI button is clicked" but actually just asserts that a function exists is worse than no test at all — it gives false confidence.
+This matters because a test that says "this UI button is clicked" but actually just asserts that a function exists is worse than no test at all it gives false confidence.
 
 ## Getting Started
 
@@ -110,20 +110,20 @@ Running real sessions with this setup has surfaced a few recurring patterns wort
 
 LLM's like to take shortcuts, in one of the first tests I did with this, the @test agent, only wrote test stubs as it 'couldn't write the tests as it did not know the implementation' 
 
-Before `@impl` writes any code, it must confirm the acceptance suite is red for production-side reasons. This catches a whole category of bugs where tests pass vacuously — wrong import path, wrong test command, tests not discovered — before you've committed to an implementation direction.
+Before `@impl` writes any code, it must confirm the acceptance suite is red for production-side reasons. This catches a whole category of bugs where tests pass vacuously, wrong import path, wrong test command, tests not discovered before you've committed to an implementation direction.
 
 When `@test` escalates, resist the urge to patch the test. Go back to the spec. Either the AC was too implementation-specific, too vague, or it assumed tooling you don't have. Fixing it at the spec level keeps the contract honest.
 
-The handoff from `@spec` to `@test` is not automatic — you read the spec first. This is a feature, not a bug. It's your last cheap chance to catch scope creep, missing edge cases, or criteria that sound right but won't survive contact with an actual test.
+The handoff from `@spec` to `@test` is not automatic, you read the spec first. This is a feature, not a bug. It's your last cheap chance to catch scope creep, missing edge cases, or criteria that sound right but won't survive contact with an actual test.
 
 
 ## Conclusion
 
-In my opinion the two most important concepts in working with Agentic AI is **context** and **guardrails** and both are covered with this approach
+In my opinion the two most important concepts in working with Agentic AI are **context** and **guardrails** and both are covered with this approach
 
- - Context: The project and the detailed feature spec provide a clear context
+ - Context: The project itself and the detailed feature spec provide a clear context
  - Guardrails: Implicit isolation between spec, test and implementation. 
 
 ## The Repo
 
-The full project — agents, templates, slash commands, install script, and field notes — is at [github.com/gertjana/spec-driven-agents](https://github.com/gertjana/spec-driven-agents).
+The full project agents, templates, slash commands, install script is at [github.com/gertjana/spec-driven-agents](https://github.com/gertjana/spec-driven-agents).
