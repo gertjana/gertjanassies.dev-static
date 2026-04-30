@@ -21,7 +21,7 @@ The usual answer is to impose rules: "don't change the spec", "write tests first
 
 The [spec-driven-agents](https://github.com/gertjana/spec-driven-agents) project is my answer to this: split the workflow into three isolated subagent lanes that communicate **only via committed files**. No shared chat history, no leaking context across lanes.
 
-![Spec Driven Agents Diagram](/content-images/spec-driven-agents-diagram.svg)
+<img src="/content-images/spec-driven-agents-diagram.svg" alt="Spec Driven Agents Diagram" width="500px" />
 
 Each agent has a clear job:
 
