@@ -71,6 +71,9 @@ test_author_extra_writes  = []
 &lt;p&gt;It appends a note to &lt;code&gt;.agentlog&#x2F;&amp;lt;slug&amp;gt;.md&lt;&#x2F;code&gt; and stops. You then go back to &lt;code&gt;@spec&lt;&#x2F;code&gt; to rewrite or drop the AC, or you widen the project&#x27;s test dependencies. No silent hand-waving.&lt;&#x2F;p&gt;
 &lt;p&gt;This matters because a test that says &quot;this UI button is clicked&quot; but actually just asserts that a function exists is worse than no test at all it gives false confidence.&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;getting-started&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#getting-started&quot; aria-label=&quot;Anchor link for: getting-started&quot;&gt;Getting Started&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Note that this currently only works with opencode&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
 &lt;p&gt;The project installs with a single script:&lt;&#x2F;p&gt;
 &lt;pre&gt;&lt;code data-lang=&quot;sh&quot;&gt;git clone https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;spec-driven-agents
 cd spec-driven-agents
@@ -88,8 +91,8 @@ cd spec-driven-agents
 &lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
 &lt;p&gt;Languages with auto-detected paths include Rust, Scala, JS&#x2F;TS, Python, Go, Elixir, Java, and Kotlin.&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;what-i-ve-learned&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#what-i-ve-learned&quot; aria-label=&quot;Anchor link for: what-i-ve-learned&quot;&gt;What I&#x27;ve Learned&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
-&lt;p&gt;Running real sessions with this setup has surfaced a few recurring patterns worth noting:&lt;&#x2F;p&gt;
-&lt;p&gt;LLM&#x27;s like to take shortcuts, in one of the first tests I did with this, the @test agent, only wrote test stubs as it &#x27;couldn&#x27;t write the tests as it did not know the implementation&#x27;&lt;&#x2F;p&gt;
+&lt;p&gt;Running some real sessions with this setup has surfaced a few recurring patterns worth noting:&lt;&#x2F;p&gt;
+&lt;p&gt;LLM&#x27;s like to take shortcuts, in one of the first tests I did with this, the @test agent, only wrote test stubs as it &#x27;couldn&#x27;t write the tests as it did not yet know the implementation&#x27;&lt;&#x2F;p&gt;
 &lt;p&gt;Before &lt;code&gt;@impl&lt;&#x2F;code&gt; writes any code, it must confirm the acceptance suite is red for production-side reasons. This catches a whole category of bugs where tests pass vacuously, wrong import path, wrong test command, tests not discovered before you&#x27;ve committed to an implementation direction.&lt;&#x2F;p&gt;
 &lt;p&gt;When &lt;code&gt;@test&lt;&#x2F;code&gt; escalates, resist the urge to patch the test. Go back to the spec. Either the AC was too implementation-specific, too vague, or it assumed tooling you don&#x27;t have. Fixing it at the spec level keeps the contract honest.&lt;&#x2F;p&gt;
 &lt;p&gt;The handoff from &lt;code&gt;@spec&lt;&#x2F;code&gt; to &lt;code&gt;@test&lt;&#x2F;code&gt; is not automatic, you read the spec first. This is a feature, not a bug. It&#x27;s your last cheap chance to catch scope creep, missing edge cases, or criteria that sound right but won&#x27;t survive contact with an actual test.&lt;&#x2F;p&gt;
