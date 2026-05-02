@@ -78,6 +78,8 @@ This matters because a test that says "this UI button is clicked" but actually j
 
 ## Getting Started
 
+> Note that this currently only works with opencode
+
 The project installs with a single script:
 
 ```sh
@@ -103,9 +105,9 @@ Languages with auto-detected paths include Rust, Scala, JS/TS, Python, Go, Elixi
 
 ## What I've Learned
 
-Running real sessions with this setup has surfaced a few recurring patterns worth noting:
+Running some real sessions with this setup has surfaced a few recurring patterns worth noting:
 
-LLM's like to take shortcuts, in one of the first tests I did with this, the @test agent, only wrote test stubs as it 'couldn't write the tests as it did not know the implementation' 
+LLM's like to take shortcuts, in one of the first tests I did with this, the @test agent, only wrote test stubs as it 'couldn't write the tests as it did not yet know the implementation' 
 
 Before `@impl` writes any code, it must confirm the acceptance suite is red for production-side reasons. This catches a whole category of bugs where tests pass vacuously, wrong import path, wrong test command, tests not discovered before you've committed to an implementation direction.
 
