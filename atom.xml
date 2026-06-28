@@ -127,7 +127,7 @@ cd spec-driven-agents
 &lt;p&gt;As I wrote about &lt;a href=&quot;&#x2F;post&#x2F;260310_ai_in_electronics_design&quot;&gt;previously&lt;&#x2F;a&gt;, I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project &lt;a rel=&quot;noopener external&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;gertjana&#x2F;cpu_in_fpga&quot;&gt;cpu_in_fpga&lt;&#x2F;a&gt; is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.&lt;&#x2F;p&gt;
 &lt;p&gt;I wanted the programs you can run on it: &quot;to do something&quot; (the functional programmer in me would say: It needs to have side effects)&lt;&#x2F;p&gt;
 &lt;p&gt;Typically this is done through dedicated &lt;code&gt;IN&lt;&#x2F;code&gt; and &lt;code&gt;OUT&lt;&#x2F;code&gt; instructions. where the assembly program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO ports, an Analog Digital Converter, the 8 LED&#x27;s on the board, etc)&lt;&#x2F;p&gt;
-&lt;p&gt;One of those peripherals I built is a hardware pseudo-random number generator (PRNG), as any cpu will benefit from some randomness.&lt;&#x2F;p&gt;
+&lt;p&gt;One of those peripherals I built is a pseudo-random number generator (PRNG), as any cpu will benefit from some randomness.&lt;&#x2F;p&gt;
 &lt;p&gt;This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;the-galois-lfsr&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-galois-lfsr&quot; aria-label=&quot;Anchor link for: the-galois-lfsr&quot;&gt;The Galois LFSR&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
 &lt;p&gt;The PRNG is implemented as an 8-bit &lt;strong&gt;Galois Linear Feedback Shift Register&lt;&#x2F;strong&gt; (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The &quot;Galois&quot; configuration places those XOR gates &lt;em&gt;inside&lt;&#x2F;em&gt; the register, in parallel  making it fast in hardware.&lt;&#x2F;p&gt;
@@ -156,12 +156,12 @@ wire [7:0] next = feedback ? (shifted ^ TAP_MASK) : shifted;
 &lt;p&gt;&lt;strong&gt;Reading the PRNG&lt;&#x2F;strong&gt; (&lt;code&gt;IN Rd, 0x01&lt;&#x2F;code&gt;) samples the 8-bit LFSR value at that instant.&lt;&#x2F;p&gt;
 &lt;p&gt;&lt;strong&gt;Seeding the PRNG&lt;&#x2F;strong&gt; (&lt;code&gt;OUT Ra, 0x01&lt;&#x2F;code&gt;) loads the value in &lt;code&gt;Ra&lt;&#x2F;code&gt; directly into the LFSR. At power-on the hardware already seeds it from a free-running counter so that each reset starts at a different point, but the program can override that at any time.&lt;&#x2F;p&gt;
 &lt;p&gt;&lt;strong&gt;Driving the LEDs&lt;&#x2F;strong&gt; (&lt;code&gt;OUT Ra, 0x02&lt;&#x2F;code&gt;) writes all 8 bits of &lt;code&gt;Ra&lt;&#x2F;code&gt; directly to the eight on-board LEDs. The LED register holds its state until the next write.&lt;&#x2F;p&gt;
-&lt;h2 id=&quot;the-program&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-program&quot; aria-label=&quot;Anchor link for: the-program&quot;&gt;The Program&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;h2 id=&quot;the-program&quot;&gt;&lt;a class=&quot;zola-anchor&quot; href=&quot;#the-program&quot; aria-label=&quot;Anchor link for: the-program&quot;&gt;The program&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
 &lt;pre&gt;&lt;code data-lang=&quot;armasm&quot;&gt;; prng.asm  hardware PRNG demo
 ; clk_div: 20
 ; name: Random
 ;
-; Reads the hardware Galois PRNG and displays each value on the LEDs
+; Reads the FPGA programmed Galois PRNG and displays each value on the LEDs
 
 .equ PRNG_PORT,    0x01
 .equ LEDS_PORT,    0x02
@@ -176,7 +176,7 @@ loop:
         JMP  loop                 ; repeat forever
 &lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
 &lt;p&gt;Let&#x27;s step through it:&lt;&#x2F;p&gt;
-&lt;p&gt;&lt;strong&gt;&lt;code&gt;LDI R0, INITIAL_SEED&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt;  Load Immediate. Puts the value &lt;code&gt;0x2A&lt;&#x2F;code&gt; (decimal 40) into register R0. This is the starting seed.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;LDI R0, INITIAL_SEED&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt;  Load Immediate. Puts the value &lt;code&gt;0x2A&lt;&#x2F;code&gt; (decimal 42) into register R0. This is the starting seed.&lt;&#x2F;p&gt;
 &lt;p&gt;&lt;strong&gt;&lt;code&gt;OUT R0, PRNG_PORT&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt;  Write R0 to port 1. This reseeds the LFSR with &lt;code&gt;0x2A&lt;&#x2F;code&gt;, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).&lt;&#x2F;p&gt;
 &lt;p&gt;&lt;strong&gt;&lt;code&gt;IN R7, PRNG_PORT&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt;  Read port 1 into R7. Because the LFSR is running at 12 MHz and the CPU clock is divided down by 20 (the &lt;code&gt;clk_div: 20&lt;&#x2F;code&gt; header directive), a meaningful number of LFSR cycles have elapsed since the last read. The value in R7 is effectively a fresh random byte every iteration.&lt;&#x2F;p&gt;
 &lt;p&gt;&lt;strong&gt;&lt;code&gt;OUT R7, LEDS_PORT&lt;&#x2F;code&gt;&lt;&#x2F;strong&gt;  Write R7 to port 2. The 8 LEDs instantly reflect the new random value.&lt;&#x2F;p&gt;

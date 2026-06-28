@@ -9,7 +9,7 @@
 
     
     
-<meta name="description" content="Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions" />
+<meta name="description" content="Using a Galois LFSR PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions" />
 
 
     
@@ -17,7 +17,7 @@
 <meta property="og:type" content="article" />
 <meta property="og:site_name" content="gertjanassies.dev" />
 <meta property="og:title" content="Random Numbers on a Homebrew FPGA CPU" />
-<meta property="og:description" content="Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions" />
+<meta property="og:description" content="Using a Galois LFSR PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions" />
 <meta property="og:url" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;post&#x2F;260416_prng_on_fpga_cpu&#x2F;" />
 
 <meta property="og:image" content="https:&#x2F;&#x2F;gertjanassies.dev&#x2F;content-images&#x2F;random_dice.jpg" />
@@ -73,7 +73,7 @@
   "@context": "https://schema.org",
   "@type": "BlogPosting",
   "headline": "Random Numbers on a Homebrew FPGA CPU",
-  "description": "Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions",
+  "description": "Using a Galois LFSR PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions",
   "author": { "@type": "Person", "name": "Gertjan Assies" },
   "datePublished": "2026-04-16T00:00:00Z",
   
@@ -156,7 +156,7 @@
     </div>
 
     
-      <p class="post-view-summary">Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions</p>
+      <p class="post-view-summary">Using a Galois LFSR PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions</p>
     
 
     <div class="post-view-content">
@@ -169,7 +169,7 @@
 <p>As I wrote about <a href="/post/260310_ai_in_electronics_design">previously</a>, I have been building an 8-bit CPU in Verilog, synthesized onto an Intel MAX1000 FPGA. The project <a rel="noopener external" target="_blank" href="https://github.com/gertjana/cpu_in_fpga">cpu_in_fpga</a> is a simple CPU with 8 general-purpose registers, a hardware stack, an ALU.</p>
 <p>I wanted the programs you can run on it: "to do something" (the functional programmer in me would say: It needs to have side effects)</p>
 <p>Typically this is done through dedicated <code>IN</code> and <code>OUT</code> instructions. where the assembly program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO ports, an Analog Digital Converter, the 8 LED's on the board, etc)</p>
-<p>One of those peripherals I built is a hardware pseudo-random number generator (PRNG), as any cpu will benefit from some randomness.</p>
+<p>One of those peripherals I built is a pseudo-random number generator (PRNG), as any cpu will benefit from some randomness.</p>
 <p>This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.</p>
 <h2 id="the-galois-lfsr"><a class="zola-anchor" href="#the-galois-lfsr" aria-label="Anchor link for: the-galois-lfsr">The Galois LFSR</a></h2>
 <p>The PRNG is implemented as an 8-bit <strong>Galois Linear Feedback Shift Register</strong> (LFSR). An LFSR is a shift register where some of the bits are fed back through XOR gates to produce the next state. The "Galois" configuration places those XOR gates <em>inside</em> the register, in parallel  making it fast in hardware.</p>
@@ -198,12 +198,12 @@ wire [7:0] next = feedback ? (shifted ^ TAP_MASK) : shifted;
 <p><strong>Reading the PRNG</strong> (<code>IN Rd, 0x01</code>) samples the 8-bit LFSR value at that instant.</p>
 <p><strong>Seeding the PRNG</strong> (<code>OUT Ra, 0x01</code>) loads the value in <code>Ra</code> directly into the LFSR. At power-on the hardware already seeds it from a free-running counter so that each reset starts at a different point, but the program can override that at any time.</p>
 <p><strong>Driving the LEDs</strong> (<code>OUT Ra, 0x02</code>) writes all 8 bits of <code>Ra</code> directly to the eight on-board LEDs. The LED register holds its state until the next write.</p>
-<h2 id="the-program"><a class="zola-anchor" href="#the-program" aria-label="Anchor link for: the-program">The Program</a></h2>
+<h2 id="the-program"><a class="zola-anchor" href="#the-program" aria-label="Anchor link for: the-program">The program</a></h2>
 <pre><code data-lang="armasm">; prng.asm  hardware PRNG demo
 ; clk_div: 20
 ; name: Random
 ;
-; Reads the hardware Galois PRNG and displays each value on the LEDs
+; Reads the FPGA programmed Galois PRNG and displays each value on the LEDs
 
 .equ PRNG_PORT,    0x01
 .equ LEDS_PORT,    0x02
@@ -218,7 +218,7 @@ loop:
         JMP  loop                 ; repeat forever
 </code></pre>
 <p>Let's step through it:</p>
-<p><strong><code>LDI R0, INITIAL_SEED</code></strong>  Load Immediate. Puts the value <code>0x2A</code> (decimal 40) into register R0. This is the starting seed.</p>
+<p><strong><code>LDI R0, INITIAL_SEED</code></strong>  Load Immediate. Puts the value <code>0x2A</code> (decimal 42) into register R0. This is the starting seed.</p>
 <p><strong><code>OUT R0, PRNG_PORT</code></strong>  Write R0 to port 1. This reseeds the LFSR with <code>0x2A</code>, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).</p>
 <p><strong><code>IN R7, PRNG_PORT</code></strong>  Read port 1 into R7. Because the LFSR is running at 12 MHz and the CPU clock is divided down by 20 (the <code>clk_div: 20</code> header directive), a meaningful number of LFSR cycles have elapsed since the last read. The value in R7 is effectively a fresh random byte every iteration.</p>
 <p><strong><code>OUT R7, LEDS_PORT</code></strong>  Write R7 to port 2. The 8 LEDs instantly reflect the new random value.</p>
@@ -252,7 +252,7 @@ loop:
         Opinions expressed here are my own and not the views of my employer or anyone else, (re)use is free, but quoting the source is appreciated.
         <br/>
         This blog is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a> &copy; 2023-2025 by Gertjan Assies.
-        <span class="version">Version: 673e22f</span>
+        <span class="version">Version: 9e792a7</span>
       </div>
     </footer>
     <script>
