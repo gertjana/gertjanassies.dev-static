@@ -2,7 +2,7 @@
 path = "post/260416_prng_on_fpga_cpu"
 title = 'Random Numbers on a Homebrew FPGA CPU'
 date = '2026-04-16'
-description = 'Using a Galois LFSR hardware PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions'
+description = 'Using a Galois LFSR PRNG on a custom 8-bit CPU in an FPGA, wired up with IN and OUT instructions'
 [taxonomies]
 categories = ['code']
 tags = ['fpga', 'assembly', 'cpu', 'prng', 'featured']
@@ -19,7 +19,7 @@ I wanted the programs you can run on it: "to do something" (the functional progr
 
 Typically this is done through dedicated `IN` and `OUT` instructions. where the assembly program can access peripherals via port assignments (each port resembles a certain peripheral, like GPIO ports, an Analog Digital Converter, the 8 LED's on the board, etc)
 
-One of those peripherals I built is a hardware pseudo-random number generator (PRNG), as any cpu will benefit from some randomness.
+One of those peripherals I built is a pseudo-random number generator (PRNG), as any cpu will benefit from some randomness.
 
 This post walks through how it works, how the assembly program talks to it, and what you can see when it runs.
 
@@ -69,14 +69,14 @@ The relevant port assignments are:
 
 **Driving the LEDs** (`OUT Ra, 0x02`) writes all 8 bits of `Ra` directly to the eight on-board LEDs. The LED register holds its state until the next write.
 
-## The Program
+## The program
 
 ```armasm
 ; prng.asm  hardware PRNG demo
 ; clk_div: 20
 ; name: Random
 ;
-; Reads the hardware Galois PRNG and displays each value on the LEDs
+; Reads the FPGA programmed Galois PRNG and displays each value on the LEDs
 
 .equ PRNG_PORT,    0x01
 .equ LEDS_PORT,    0x02
@@ -93,7 +93,7 @@ loop:
 
 Let's step through it:
 
-**`LDI R0, INITIAL_SEED`**  Load Immediate. Puts the value `0x2A` (decimal 40) into register R0. This is the starting seed.
+**`LDI R0, INITIAL_SEED`**  Load Immediate. Puts the value `0x2A` (decimal 42) into register R0. This is the starting seed.
 
 **`OUT R0, PRNG_PORT`**  Write R0 to port 1. This reseeds the LFSR with `0x2A`, giving the sequence a deterministic starting point (on top of the hardware seed already applied at reset).
 
