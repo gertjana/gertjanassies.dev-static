@@ -1,4 +1,5 @@
 :root {
+  /* Brand accent colors (same in both modes) */
   --accent: #01c0f0;
   --accent-1: #ff0099;
   --accent-2: #b45eff;
@@ -14,27 +15,185 @@
   --error: #f80363;
   --misc: #b45eff;
 
+  /* Table row alternation */
   --odd: #eee;
-  --even: 111;
+  --even: #f9f9f9;
+
+  /* Backgrounds */
+  --bg: #ffffff;
+  --bg-surface: #f8f9fa;
+  --bg-surface-2: #f0f0f0;
+
+  /* Text */
+  --text: #333333;
+  --text-muted: #666666;
+  --text-subtle: #555555;
+
+  /* Headings */
+  --heading: #1a3a6b;
+
+  /* Borders */
+  --border: #e0e0e0;
+  --border-subtle: #eeeeee;
+  --border-table: #dddddd;
+
+  /* Links */
+  --link: #007bff;
+  --link-hover: #0056b3;
+
+  /* Category badges */
+  --category-bg: #e3f2fd;
+  --category-text: #1565c0;
+  --category-border: #bbdefb;
+  --category-hover-bg: #bbdefb;
+
+  /* Tag badges */
+  --tag-bg: #f1f8e9;
+  --tag-text: #2e7d32;
+  --tag-border: #c8e6c9;
+  --tag-hover-bg: #dcedc8;
+
+  /* Code / pre blocks */
+  --code-bg: #f1f3f4;
+  --pre-bg: #f8f9fa;
+  --pre-border: #e1e4e8;
+
+  /* Copy button */
+  --copy-btn-bg: rgba(255, 255, 255, 0.9);
+  --copy-btn-bg-hover: #ffffff;
+  --copy-btn-border: #d1d5db;
+  --copy-btn-border-hover: #9ca3af;
+  --copy-btn-text: #4b5563;
+  --copy-btn-text-hover: #1f2937;
+  --copy-btn-active-bg: #f3f4f6;
+
+  /* Blockquote */
+  --blockquote-bg: #f8f9fa;
+  --blockquote-border: #007bff;
+
+  /* Post cards / list items */
+  --card-bg: #ffffff;
+  --card-border: #e0e0e0;
+
+  /* Active filters */
+  --filter-bg: #f8f9fa;
+
+  /* Post title link */
+  --post-title-color: #333333;
+  --post-title-hover: #007bff;
+
+  /* Misc UI */
+  --header-h1: #333333;
+  --header-p: #666666;
+  --placeholder-start: #f5f7fa;
+  --placeholder-end: #c3cfe2;
+  --placeholder-text: #999999;
+  --error-text: #dd0000;
+  --not-found-h1: #333333;
+  --not-found-p: #666666;
+  --stat-color: #6c757d;
+  --stat-separator: #adb5bd;
+  --like-btn-hover-bg: #f8f9fa;
+  --like-btn-active-bg: #e9ecef;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Brand accent colors (same in both modes) */
     --accent: #01c0f0;
     --accent-1: #ff0099;
     --accent-2: #b45eff;
     --accent-3: #01c0f0;
+    --accent-3-light: #08e0f0;
     --accent-4: #1de691;
     --accent-5: #ff8c00;
 
-    --links: steelblue;
+    --links: #58a6ff;
     --info: #35c9fa;
     --success: #88ff88;
     --warning: #ece715;
     --error: #f80363;
     --misc: #b45eff;
 
-    --odd: #444;
-    --even: #eee;
+    /* Table row alternation */
+    --odd: #2a2a4a;
+    --even: #1e1e38;
+
+    /* Backgrounds */
+    --bg: #0d1117;
+    --bg-surface: #161b22;
+    --bg-surface-2: #21262d;
+
+    /* Text */
+    --text: #e0e0e0;
+    --text-muted: #8b949e;
+    --text-subtle: #9ca3af;
+
+    /* Headings */
+    --heading: #7eb8f7;
+
+    /* Borders */
+    --border: #30363d;
+    --border-subtle: #21262d;
+    --border-table: #30363d;
+
+    /* Links */
+    --link: #58a6ff;
+    --link-hover: #79b8ff;
+
+    /* Category badges */
+    --category-bg: #1a3a6b;
+    --category-text: #7eb8f7;
+    --category-border: #2a4a8a;
+    --category-hover-bg: #2a4a8a;
+
+    /* Tag badges */
+    --tag-bg: #1a3a2a;
+    --tag-text: #81c784;
+    --tag-border: #2a5a2a;
+    --tag-hover-bg: #2a5a2a;
+
+    /* Code / pre blocks */
+    --code-bg: #1e1e2e;
+    --pre-bg: #161b22;
+    --pre-border: #30363d;
+
+    /* Copy button */
+    --copy-btn-bg: rgba(22, 27, 34, 0.9);
+    --copy-btn-bg-hover: #21262d;
+    --copy-btn-border: #30363d;
+    --copy-btn-border-hover: #484f58;
+    --copy-btn-text: #8b949e;
+    --copy-btn-text-hover: #e0e0e0;
+    --copy-btn-active-bg: #2d333b;
+
+    /* Blockquote */
+    --blockquote-bg: #161b22;
+    --blockquote-border: #58a6ff;
+
+    /* Post cards / list items */
+    --card-bg: #161b22;
+    --card-border: #30363d;
+
+    /* Active filters */
+    --filter-bg: #161b22;
+
+    /* Post title link */
+    --post-title-color: #e0e0e0;
+    --post-title-hover: #58a6ff;
+
+    /* Misc UI */
+    --header-h1: #e0e0e0;
+    --header-p: #8b949e;
+    --placeholder-start: #21262d;
+    --placeholder-end: #30363d;
+    --placeholder-text: #484f58;
+    --error-text: #ff6b6b;
+    --not-found-h1: #e0e0e0;
+    --not-found-p: #8b949e;
+    --stat-color: #8b949e;
+    --stat-separator: #484f58;
+    --like-btn-hover-bg: #21262d;
+    --like-btn-active-bg: #2d333b;
   }
 }
